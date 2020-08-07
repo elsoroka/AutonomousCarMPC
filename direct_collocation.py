@@ -83,12 +83,16 @@ class MpcProblem:
             pint = np.polyint(p)
             self._B[j] = pint(1.0)
 
+        self.fixed_points = dict()
+
 
 
     # Update the cost function between iterations
     def set_cost(self, cost):
         self.cost = cost
 
+    def set_fixed_point(self,k, point_lower, point_upper):
+        self.fixed_points[k] = [point_lower, point_upper]
 
     def run(self, ic:np.array):
         self.ic = np.reshape(ic, (self.n,1))
@@ -140,10 +144,14 @@ class MpcProblem:
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
-                lbw.append(np.reshape(
-                      [self.lowerbounds(self.sys.x[0].name(), i, k) for i in range(self.n)], (self.n,1)))
-                ubw.append(np.reshape(
-                      [self.upperbounds(self.sys.x[0].name(), i, k) for i in range(self.n)], (self.n,1)))
+                if j == 0 and k in self.fixed_points.keys():
+                    lbw.append(self.fixed_points[k][0])
+                    ubw.append(self.fixed_points[k][1])
+                else:
+                    lbw.append(np.reshape(
+                        [self.lowerbounds(self.sys.x[0].name(), i, k) for i in range(self.n)], (self.n,1)))
+                    ubw.append(np.reshape(
+                        [self.upperbounds(self.sys.x[0].name(), i, k) for i in range(self.n)], (self.n,1)))
                 w0.append(np.zeros((self.n, 1)))
 
             # Loop over collocation points
@@ -194,7 +202,7 @@ class MpcProblem:
 
         # Create an NLP solver
         prob = {'f': J, 'x': w, 'g': g}
-        solver = ca.nlpsol('solver', 'ipopt', prob);
+        solver = ca.nlpsol('solver', 'ipopt', prob, {'verbose':False});
 
         # Function to get x and u trajectories from w
         trajectories = ca.Function('trajectories', [w], [x_plot, u_plot], ['w'], ['x', 'u'])

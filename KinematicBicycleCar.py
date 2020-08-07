@@ -72,7 +72,7 @@ class KinematicBicycleCar():
 
 	# PLOTTING
 	def plot_u(self, u_executed, u_planned):
-		fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(8,4), sharex=True, gridspec_kw={'wspace': 0.5})
+		fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,4), sharex=True, gridspec_kw={'wspace': 0.5})
 
 		# Plot the given data
 		tgrid = np.linspace(0, self.T, len(u_executed[0]))
@@ -92,13 +92,13 @@ class KinematicBicycleCar():
 		return fig1, ax1, ax2
 
 	def plot_x(self, x_executed, x_planned):
-		fig2, ax = plt.subplots(1,1, figsize=(6, 4))
+		fig2, ax = plt.subplots(1,1, figsize=(12, 4))
 
 		# Plot the last optimal path computed
 		tgrid = np.linspace(0, self.T, self.N)
 		vx = np.multiply(x_planned[2],np.cos(x_planned[3]))
 		vy = np.multiply(x_planned[2],np.sin(x_planned[3]))
-		q = ax.quiver(x_planned[0], x_planned[1], vx, vy, color='orange')
+		q = ax.quiver(x_planned[0], x_planned[1], vx, vy, color='orange', linewidth=0.5)
 		ax.quiverkey(q, X=0.25, Y=0.2, U=5,
 					 label='Planned', labelpos='E')
 
@@ -106,9 +106,12 @@ class KinematicBicycleCar():
 		tgrid = np.linspace(0, self.T, len(x_executed[0]))
 		vx = np.multiply(x_executed[2],np.cos(x_executed[3]))
 		vy = np.multiply(x_executed[2],np.sin(x_executed[3]))
-		q = ax.quiver(x_executed[0], x_executed[1], vx, vy)
+		q = ax.quiver(x_executed[0], x_executed[1], vx, vy, color='blue', linewidth=0.5)
 		ax.quiverkey(q, X=0.25, Y=0.1, U=5,
 					 label='Velocity', labelpos='E')
+
+		ax.scatter(x_executed[0], x_executed[1], color='navy')
+		ax.scatter(x_planned[0], x_planned[1], color='red')
 
 		ax.set(xlabel="x (m)",ylabel="y (m)")
 		fig2.suptitle("Trajectory")
