@@ -63,6 +63,8 @@ class KinematicBicycleCar(AbstractBaseCar):
 		mpl.rcParams['lines.linewidth'] = 3
 		mpl.rcParams['axes.grid'] = True
 
+		self.v_estimate = None
+
 
 	def getDae(self)->casadi.DaeBuilder:
 		return self.dae
@@ -71,10 +73,14 @@ class KinematicBicycleCar(AbstractBaseCar):
 	def set_initial(self, ic:[]):
 		for i, s in enumerate(self.dae.x):
 			self.dae.set_start(s.name(), ic[i])
+		if None == self.v_estimate:
+			self.v_estimate = ic[2]*np.ones((self.N,1))
 
 
 	def set_fixed_point(self, k:int, fixed_upper:np.array, fixed_lower:np.array)->None:
 		self.fixed_points[k] = [fixed_upper, fixed_lower]
+		if np.isfinite(fixed_upper[2]) and np.isfinite(fixed_lower[2]):
+			self.v_estimate[k] = 0.5*(fixed_upper[2] + fixed_lower[2]) # average.
 
 	def clear_fixed_point(self, k:int or [int])->None:
 		if typeof(k) == int:
@@ -84,10 +90,13 @@ class KinematicBicycleCar(AbstractBaseCar):
 		for key in k:
 			del self.fixed_points[k]
 		# Will crash if k not iterable.
+
+	def set_v_estimate(self, v_estimate:np.array):
+		self.v_estimate = v_estimate
 	
 	
 	# CONSTRAINT HANDLERS
-	def upperbounds_x(self, k:int, v_estimate:float)->np.array:
+	def upperbounds_x(self, k:int)->np.array:
 		# This function returns the upper bound for the entire state vector.
 		# at given index k=0,...,N with velocity estiamte v_estimate
 		# (this is important because we may want to estimate our position)
@@ -101,7 +110,7 @@ class KinematicBicycleCar(AbstractBaseCar):
                   			np.pi/4,
                   			np.pi/4])
 
-	def lowerbounds_x(self, k:int, v_estimate:float)->np.array:
+	def lowerbounds_x(self, k:int)->np.array:
 		if k in self.fixed_points.keys():
 			return self.fixed_points[k][1] # Recall upper is first, then lower
 		else:
@@ -112,10 +121,10 @@ class KinematicBicycleCar(AbstractBaseCar):
                  			 -np.pi/4])
 
 
-	def upperbounds_u(self, k:int, v_estimate:float)->np.array:
+	def upperbounds_u(self, k:int)->np.array:
 		return np.array([2.5, np.pi/4]) # <= 0.84 preferred
 
-	def lowerbounds_u(self, k:int, v_estimate:float)->np.array:
+	def lowerbounds_u(self, k:int)->np.array:
 		return np.array([-5, -np.pi/4]) # >= -1.70 preferred
 
 

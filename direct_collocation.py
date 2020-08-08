@@ -27,23 +27,11 @@ import matplotlib.pyplot as plt
 
 class MpcProblem:
 
-    def __init__(self, model,       # Car model
-                       cost,        # casadi symbolic objective
-                       lowerbounds:callable, # given name of state/control variable, return lower bound
-                       upperbounds:callable, # given name of state/control variable, return upper bound
-                       #N    = 30,   # MPC horizon (steps)
-                       #step = 0.01, # Time step (seconds)
-                       ): 
-        #self.N    = N
-        #self.step = step
+    def __init__(self, model, cost):        # casadi symbolic objective
+
         self.model = model
         self.sys  = model.getDae()
         self.cost = cost
-        self.lowerbounds = lowerbounds
-        self.upperbounds = upperbounds
-        #self.T   = N*step # Time horizon (seconds)
-        #self.n   = sum([s.shape[0] for s in sys.x]) # Number of states
-        #self.m   = sum([u.shape[0] for u in sys.u]) # Number of controls
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
         self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
 
@@ -84,9 +72,6 @@ class MpcProblem:
             pint = np.polyint(p)
             self._B[j] = pint(1.0)
 
-        self.fixed_points = dict()
-
-
 
     # Update the cost function between iterations
     def set_cost(self, cost):
@@ -94,7 +79,7 @@ class MpcProblem:
 
 
     def run(self, ic:np.array):
-        self.ic = np.reshape(ic, (self.model.n,1))
+        self.ic = np.reshape(ic, (self.model.n,))
         # Start with an empty NLP
         w   = [] # state
         w0  = [] # initial state
@@ -130,11 +115,9 @@ class MpcProblem:
             # New NLP variable for the control
             Uk = ca.MX.sym("U_"+str(k), self.model.m)
             w.append(Uk)
-            lbw.append(np.reshape(
-                      [self.lowerbounds(self.sys.u[0].name(), i, k) for i in range(self.model.m)], (self.model.m,1)))
-            ubw.append(np.reshape(
-                      [self.upperbounds(self.sys.u[0].name(), i, k) for i in range(self.model.m)], (self.model.m,1)))
-            w0.append(np.zeros((self.model.m, 1)))
+            lbw.append(np.reshape(self.model.lowerbounds_u(k), (self.model.m,)))
+            ubw.append(np.reshape(self.model.upperbounds_u(k), (self.model.m,)))
+            w0.append(np.zeros((self.model.m,)))
             u_plot.append(Uk)
 
             # State at collocation points
@@ -143,15 +126,9 @@ class MpcProblem:
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
-                if j == 0 and k in self.fixed_points.keys():
-                    lbw.append(self.fixed_points[k][0])
-                    ubw.append(self.fixed_points[k][1])
-                else:
-                    lbw.append(np.reshape(
-                        [self.lowerbounds(self.sys.x[0].name(), i, k) for i in range(self.model.n)], (self.model.n,1)))
-                    ubw.append(np.reshape(
-                        [self.upperbounds(self.sys.x[0].name(), i, k) for i in range(self.model.n)], (self.model.n,1)))
-                w0.append(np.zeros((self.model.n, 1)))
+                lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
+                ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+                w0.append(np.zeros((self.model.n,)))
 
             # Loop over collocation points
             Xk_end = self._D[0]*Xk
@@ -163,8 +140,8 @@ class MpcProblem:
                # Append collocation equations
                fj, qj = f(Xc[j-1],Uk)
                g.append(self.model.step*fj - xp)
-               lbg.append(np.zeros((self.model.n,1)))
-               ubg.append(np.zeros((self.model.n,1)))
+               lbg.append(np.zeros((self.model.n,)))
+               ubg.append(np.zeros((self.model.n,)))
 
                # Add contribution to the end state
                Xk_end = Xk_end + self._D[j]*Xc[j-1];
@@ -175,17 +152,15 @@ class MpcProblem:
             # New NLP variable for state at end of interval
             Xk = ca.MX.sym('X_' + str(k+1), self.model.n)
             w.append(Xk)
-            lbw.append(np.reshape(
-                      [self.lowerbounds(self.sys.x[0].name(), i, k) for i in range(self.model.n)], (self.model.n,1)))
-            ubw.append(np.reshape(
-                      [self.upperbounds(self.sys.x[0].name(), i, k) for i in range(self.model.n)], (self.model.n,1)))
-            w0.append(np.zeros((self.model.n, 1)))
+            lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
+            ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+            w0.append(np.zeros((self.model.n, )))
             x_plot.append(Xk)
 
             # Add equality constraint
             g.append(Xk_end-Xk)
-            lbg.append(np.zeros((self.model.n,1)))
-            ubg.append(np.zeros((self.model.n,1)))
+            lbg.append(np.zeros((self.model.n,)))
+            ubg.append(np.zeros((self.model.n,)))
 
         # Concatenate vectors
         w = ca.vertcat(*w)
@@ -212,6 +187,9 @@ class MpcProblem:
         
         self.x_opt = x_opt.full() # to numpy array
         self.u_opt = u_opt.full() # to numpy array
+
+        # Feed the velocity at N = 30 points back to the model
+        self.model.set_v_estimate(self.x_opt[2])
 
         return self.x_opt, self.u_opt
 
