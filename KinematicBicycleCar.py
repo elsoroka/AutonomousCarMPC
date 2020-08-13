@@ -189,3 +189,27 @@ class KinematicBicycleCar(AbstractBaseCar):
 
 		return fig2, ax
 
+	def plot_with_time(self, x_executed:np.array, x_planned:np.array, boundary_up:np.array, boundary_low:np.array):
+		fig1, (ax1, ax2) = plt.subplots(2,1, figsize=(10,4), sharex=True)
+
+		# Plot the bounds around the executed steps
+		t = np.linspace(0, 0.05*(np.size(boundary_up)//2-1), np.size(boundary_up)//2)
+		ax1.plot(t, boundary_up[:,0], color='gray')
+		ax1.plot(t, boundary_low[:,0], color='gray')
+		ax2.plot(t, boundary_up[:,1], color='gray')
+		ax2.plot(t, boundary_low[:,1], color='gray')
+
+		# Plot the executed steps
+		t = np.linspace(0, 0.05*(np.size(x_executed)//5-1), np.size(x_executed)//5)
+		ax1.plot(t, x_executed[0,:], color='blue')
+		ax2.plot(t, x_executed[1,:], color='blue')
+
+		# Plot the planned steps
+		t = t[-1] + np.linspace(0, 0.05*(np.size(x_planned)//5-1), np.size(x_planned)//5)
+		ax1.plot(t, x_planned[0,:], color='orange')
+		ax2.plot(t, x_planned[1,:], color='orange')
+
+		ax1.set(ylabel="x (m)")
+		ax2.set(ylabel="y (m)", xlabel="Time (s)")
+		return fig1, ax1, ax2
+
