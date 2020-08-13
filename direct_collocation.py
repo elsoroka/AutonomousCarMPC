@@ -189,7 +189,8 @@ class MpcProblem:
         self.u_opt = u_opt.full() # to numpy array
 
         # Feed the velocity at N = 30 points back to the model
-        self.model.set_v_estimate(self.x_opt[2])
+        self.model.set_state_estimate(self.x_opt)
+        self.model.c += 1
 
         return self.x_opt, self.u_opt
 

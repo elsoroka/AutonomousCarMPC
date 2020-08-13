@@ -63,7 +63,8 @@ class KinematicBicycleCar(AbstractBaseCar):
 		mpl.rcParams['lines.linewidth'] = 3
 		mpl.rcParams['axes.grid'] = True
 
-		self.v_estimate = None
+		self.state_estimate = None
+		self.c = 0
 
 
 	def getDae(self)->casadi.DaeBuilder:
@@ -73,14 +74,16 @@ class KinematicBicycleCar(AbstractBaseCar):
 	def set_initial(self, ic:[]):
 		for i, s in enumerate(self.dae.x):
 			self.dae.set_start(s.name(), ic[i])
-		if None == self.v_estimate:
-			self.v_estimate = ic[2]*np.ones((self.N,1))
+		if None == self.state_estimate:
+			self.state_estimate = np.empty((5,self.N))
+			for i in range(5):
+				self.state_estimate[i,:] = ic[i]*np.ones(self.N)
 
 
 	def set_fixed_point(self, k:int, fixed_upper:np.array, fixed_lower:np.array)->None:
 		self.fixed_points[k] = [fixed_upper, fixed_lower]
 		if np.isfinite(fixed_upper[2]) and np.isfinite(fixed_lower[2]):
-			self.v_estimate[k] = 0.5*(fixed_upper[2] + fixed_lower[2]) # average.
+			self.state_estimate[2,k] = 0.5*(fixed_upper[2] + fixed_lower[2]) # average.
 
 	def clear_fixed_point(self, k:int or [int])->None:
 		if typeof(k) == int:
@@ -91,21 +94,21 @@ class KinematicBicycleCar(AbstractBaseCar):
 			del self.fixed_points[k]
 		# Will crash if k not iterable.
 
-	def set_v_estimate(self, v_estimate:np.array):
-		self.v_estimate = v_estimate
+	def set_state_estimate(self, state_estimate:np.array):
+		self.state_estimate = state_estimate
 	
 	
 	# CONSTRAINT HANDLERS
 	def upperbounds_x(self, k:int)->np.array:
 		# This function returns the upper bound for the entire state vector.
-		# at given index k=0,...,N with velocity estiamte v_estimate
+		# at given index k=0,...,N with velocity estimate v_estimate
 		# (this is important because we may want to estimate our position)
 		# These functions should take into account any fixed points.
 		if k in self.fixed_points.keys():
 			return self.fixed_points[k][0] # Recall upper is first, then lower
 		else:
-			return np.array([20.0,
-                  			1.0,
+			return np.array([self.state_estimate[0,0] + self.step*np.sum(self.state_estimate[2,:k])+1,#20.0,
+                  			self.state_estimate[1,0] + np.sin((k+self.c)*np.pi/60)+1,#1.0,
                   			20.0,
                   			np.pi/4,
                   			np.pi/4])
@@ -114,8 +117,8 @@ class KinematicBicycleCar(AbstractBaseCar):
 		if k in self.fixed_points.keys():
 			return self.fixed_points[k][1] # Recall upper is first, then lower
 		else:
-			return np.array([-1.0,
-                  			 -1.0,
+			return np.array([self.state_estimate[0,0] + self.step*np.sum(self.state_estimate[2,:k])-1,#-1.0,
+                  			 self.state_estimate[1,0] + np.sin((k+self.c)*np.pi/60)-1,#-1.0,
                  			  0.0,
                  			 -np.pi/4,
                  			 -np.pi/4])
