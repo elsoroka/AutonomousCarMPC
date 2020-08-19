@@ -3,9 +3,8 @@
 # Emiko Soroka
 
 import numpy as np
-from scipy import interpolate
-from scipy.optimize import curve_fit
-N_POINTS = 4
+import bezier
+N_POINTS = 20
 
 from collections import namedtuple
 
@@ -13,66 +12,90 @@ class RoadSegment():
 	
 	Bound = namedtuple('Bound', ['slope', 'offset', 'side'])
 	
-	def __init__(self, p1:np.array, w1:float, a1:float,
-		               p2:np.array, w2:float, a2:float,):
-		# p1: road center at start of segment with width w1
-		# point p1 has direction angle (radians) a1
-		# p2: road center at end of segment with width w2
-		# point p2 has direction angle (radians) a2
-		self.p1 = p1; self.p2 = p2;
-		self.w1 = w1; self.w2 = w2;
-		self.a1 = a1; self.a2 = a2;
-		# We draw a bounding box around this road segment
-		# which has 4 sides, but is not necessarily square
-		# we represent it as 4 inequalities
+	def __init__(self, road_center:np.array, road_width:np.array):
+		self.road_center = road_center
+		self.road_width  = road_width
+
+		self.P, = np.shape(self.road_width)
+		assert (self.P,2) == np.shape(self.road_center)
+
+		# Start and end angles
+		# note the last point is used to get the angle at the second-to-last point
+		# so the road segment is actually from the first point to the second-to-last point.
+		a1 = np.arctan2(road_center[1,1]-road_center[0,1], road_center[1,0]-road_center[0,0])
+		a2 = np.arctan2(road_center[-1,1]-road_center[-2,1], road_center[-1,0]-road_center[-2,0])
+
+		assert np.abs(a1) <= np.pi/180.0 or np.abs(a1 - 2*np.pi) <= np.pi/180.0
+		# The start angle should be very close to 0
 		
-		# These are the two bounds on the "cut edge" of the road segment
-		self.bounds = [
-			self.Bound(slope=np.tan(a1 + np.pi/2), offset=p1, side="<"),
-			self.Bound(slope=np.tan(a2 + np.pi/2), offset=p2, side=">"),
-		]
-		# now we want the two bounds on the road width
-		top_1 = np.add(p1, w1*np.array([np.cos(a1 + np.pi/2), np.sin(a1 + np.pi/2)]))
-		top_2 = np.add(p2, w2*np.array([np.cos(a2 + np.pi/2), np.sin(a2 + np.pi/2)]))
-		upper_bound = self.Bound(slope=(top_2[1]-top_1[1])/(top_2[0]-top_1[0]), offset=top_1, side=">")
-		
-		b_1 = np.subtract(p1, w1*np.array([np.cos(a1 + np.pi/2), np.sin(a1 + np.pi/2)]))
-		b_2 = np.subtract(p2, w2*np.array([np.cos(a2 + np.pi/2), np.sin(a2 + np.pi/2)]))
-		lower_bound = self.Bound(slope=(b_2[1]-b_1[1])/(b_2[0]-b_1[0]), offset=b_1, side="<")
-		self.bounds.append(upper_bound)
-		self.bounds.append(lower_bound)
+		# We draw the cut line that separates this road segment from the next
+		slope2 = np.tan(a2 + np.pi/2)
+		slope2 = np.sign(slope2)*1e4 if slope2 > 1e4 else slope2 # limit
+
+		self.bound = \
+			self.Bound(slope=slope2, offset=np.reshape(road_center[-1,:],2), side=">")
+
+		# Now we fit a curve to the points
+		nodes = np.asfortranarray(np.transpose(road_center))
+		self.curve = bezier.Curve.from_nodes(nodes)
+
+		self.dist_traveled = 0.0
+
 
 	@staticmethod
 	def check_bound(bound,p):
-		print("Bound:\n", bound)
-		print("result: ", bound.slope*(p[0]-bound.offset[0]) + bound.offset[1])
+		#print("Bound:\n", bound)
+		p = np.reshape(p,2)
+		#print("result: ", bound.slope*(p[0]-bound.offset[0]) + bound.offset[1])
+		# Catch the case where the bound has a vertical line?
 		if bound.side == ">" and np.sign(bound.slope) == 1 \
 		or bound.side == "<" and np.sign(bound.slope) == -1:
-			print("Check ABOVE:")
 			res = p[1] >= bound.slope*(p[0]-bound.offset[0]) + bound.offset[1]
 			return res
 		else:
-			print("Check BELOW")
 			res =  p[1] < bound.slope*(p[0]-bound.offset[0]) + bound.offset[1]
 			return res
 
+	def dist_to_center(self, p):
+		p = np.reshape(p,2)
+		points = np.linspace(0,1,self.P)
+		points = self.curve.evaluate_multi(points)
+		best = np.Inf
+		best_idx = 0
+		for i in range(self.P):
+			angle = np.arctan2(p[1]-points[1,i], p[0]-points[0,i])
+			if np.abs(angle) - np.pi/2 < best:
+				best = np.abs(angle)-np.pi/2
+				best_idx = i
+			#print("i, dist(i):", np.sqrt((p[0]-points[0,i])**2 + (p[1]-points[1,i])**2))
+
+		dist = np.sqrt((p[0]-points[0,best_idx])**2 + (p[1]-points[1,best_idx])**2)
+		print("best distance:", dist)
+		return dist, best_idx
+
 	def __contains__(self, p:np.array):
-		return all([self.check_bound(b,p) for b in self.bounds])
+		dist, idx = self.dist_to_center(p)
+		p = np.reshape(p,2)
+		print("p[0], road_center[0,0]", p[0], self.road_center[0,0])
+		print("dist", dist, "width", self.road_width[idx])
+		print("bound", self.check_bound(self.bound, p))
+		res = self.check_bound(self.bound, p) and \
+		      p[0] >= self.road_center[0,0] and \
+		      dist <= self.road_width[idx]
+		return res
 
 
 class Roadrunner():
-	def __init__(self, road_center:np.array, road_width:np.array):
 
+	def __init__(self, road_center:np.array, road_width:np.array, P=20):
 
-		# experiment
-
-
+		self.P = P
 
 		# TODO: check proper sizes of road_center (n_points x 2) and width (n_points x 1)
 		self.road_center = road_center
 		n_points,_ = np.shape(road_center)
 		self.road_width = road_width
-
+		
 		self.angle = np.empty(np.shape(road_width))
 		for i in range(n_points-1):
 			# arctan2 covers the whole unit circle
@@ -84,156 +107,108 @@ class Roadrunner():
 		# Fill in the last one based on the second-to-last.
 		self.angle[-1] = self.angle[-2]
 
-		# Compute the straight-line distances between points
-		self.dists = np.empty(np.shape(road_width))
-		for i in range(16):
-			self.dists[i] = np.sqrt((road_center[i+1,0]-road_center[i,0])**2 + \
-				(road_center[i+1,1]-road_center[i,1])**2)
-		self.dists[-1] = self.dists[-2]
+		self.segments = [RoadSegment( \
+				self.to_body_frame(road_center[i:i+P], self.angle[i]),
+				road_width[i:i+P]) for i in range(n_points-P)]
 
-		self._dist_to_next = 0.0
-		self.p = 0
-
-		self.segments = []
-
-	def new_segment(self, i:int)->callable:
-		# Returns a function to represent the next bit of road.
-		road_body_frame = self.to_body_frame(road_center[i:i+N_POINTS,:], self.angle[i])
-
-		def fit1(x, a, b, c):
-
-			return a*np.square(x) + b*x + c
-
-		def fit2(x,a,b,c):
-			return a/(x+c)
-		
-		popt_y1, pcov_y1 = curve_fit(fit1, road_body_frame[:,0], road_body_frame[:,1])
-		
-		fit = fit1; popt_y = popt_y1
-
-		def f(x:np.array or float):
-
-			y = fit(x, *popt_y)
-			x_len = 1 if type(x) == float else np.size(x)
-
-			xy = np.hstack([np.reshape(x,(x_len,1)),np.reshape(y, (x_len,1))])
-			return self.to_world_frame(xy, rr.angle[rr.p])
-
-		self.segments.append(f)
-		if len(self.segments) >= N_POINTS:
-			self.segments = self.segments[-N_POINTS-1:]
-		return f
+		self.segment_ptr = 0
 
 
-	def advance(self, x_new:float, y_new:float)->None:
+	def advance(self, step:float)->RoadSegment:
 		# Imagine the road as a set of vectors
 		# which are the road center-points with direction pointing to the next point.
 		# We want to draw the perpendicular line and
 		# determine if we are before that line or after it.
-		next_x, next_y = self.road_center[self.p+1]
-		
-		if np.abs(self.angle[self.p]) < 1e-2: # road is almost straight
-			if x_new + self._dist_to_next >= self.dists[self.p]:
-				self.p += 1
-		else: # road is angled
-			# we draw a line perpendicular to the next vector road_dist, road_angle
-			# and check which side our point is on.
-			slope = np.tan(self.angle[self.p+1] + np.pi/2.0)
-			# function is f(x) = slope*(x-next_x) + next_y
-			if (slope < 0.0 and slope*(x-next_x)+next_y < 0.0) \
-			or (slope > 0.0 and slope*(x-next_x)+next_y > 0.0):
-				self.p += 1
-				print("advanced p to", self.p)
-				self.new_segment(self.p)
+
+		seg = self.segments[self.segment_ptr]
+		seg.dist_traveled += step
+		# We have finished traversing this curve:
+		if seg.curve.length/self.P <= seg.dist_traveled:
+			self.segment_ptr += 1
+
+		return self.segments[self.segment_ptr]
+
+	def evaluate(self, s:float or np.array)->np.array:
+		seg = self.segments[self.segment_ptr]
+
+		pts = None
+		if type(s) == float:
+			pts = seg.curve.evaluate(s)
+		else:
+			pts = seg.curve.evaluate_multi(s)
+		x_b = pts[0,:]
+		y_b = pts[1,:]
+	
+		x_b = np.reshape(x_b, (np.size(s),1))
+		y_b = np.reshape(y_b, (np.size(s),1))
+		fit_b = np.hstack([x_b, y_b])
+		return self.to_world_frame(fit_b, self.angle[self.segment_ptr], self.road_center[self.segment_ptr,:])
 
 
-	def to_body_frame(self, road_center:np.array, angle:float)->np.array:
+	def get_segment(self)->RoadSegment:
+		return self.segments[self.segment_ptr]
+
+
+	@staticmethod
+	def to_body_frame(road_center:np.array, angle:float)->np.array:
 		new_center = np.empty(np.shape(road_center))
-		new_center[:,0] = np.multiply(road_center[:,0], np.cos(angle)) + \
-						  np.multiply(road_center[:,1], np.sin(angle))
-		new_center[:,1] = np.multiply(road_center[:,0], -np.sin(angle)) + \
-						  np.multiply(road_center[:,1], np.cos(angle))
+		new_center[:,0] = np.multiply(road_center[:,0]-road_center[0,0], np.cos(angle)) + \
+						  np.multiply(road_center[:,1]-road_center[0,1], np.sin(angle))
+		new_center[:,1] = np.multiply(road_center[:,0]-road_center[0,0], -np.sin(angle)) + \
+						  np.multiply(road_center[:,1]-road_center[0,1], np.cos(angle))
 		return new_center
 
-	def to_world_frame(self, road_center:np.array, angle:float)->np.array:
+	@staticmethod
+	def to_world_frame(road_center:np.array, angle:float, offset:np.array)->np.array:
 		new_center = np.empty(np.shape(road_center))
+
 		new_center[:,0] = np.multiply(road_center[:,0], np.cos(angle)) + \
 						  np.multiply(road_center[:,1], -np.sin(angle))
 		new_center[:,1] = np.multiply(road_center[:,0], np.sin(angle)) + \
 						  np.multiply(road_center[:,1], np.cos(angle))
+		new_center[:,0] += offset[0]
+		new_center[:,1] += offset[1]
 		return new_center
 
 
 
 if __name__ == "__main__":
-	# road
-	road_center = np.array([
-	[2.519, 117.514],
-	[10.68, 117.192],
-	[22.303, 116.549],
-	[30.712, 115.585],
-	[40.357, 112.691],
-	[50.744, 107.226],
-	[50.249, 98.224],
-	[48.765, 84.721],
-	[47.529, 74.754],
-	[47.158, 64.466],
-	[47.034, 53.535],
-	[47.529, 41.318],
-	[48.024, 31.994],
-	[48.518, 22.028],
-	[58.41, 22.671],
-	[68.303, 23.635],
-	[77.453, 23.153],
-	])
 
-	road_width = np.array([
-		6.0,
-		6.0,
-		5.95,
-		5.9,
-		5.84,
-		5.80,
-		5.80,
-		5.86,
-		5.82,
-		5.78,
-		5.72,
-		5.7,
-		5.68,
-		5.6,
-		5.52,
-		5.44,
-		5.40,
-	])
+	from road import test_road
+	(N_POINTS,_) = np.shape(test_road)
+	test_width = np.ones(N_POINTS)*3.0
 
-	rr = Roadrunner(road_center, road_width)
+	rr = Roadrunner(test_road, test_width, P = 20)
 	import matplotlib.pyplot as plt
 
 
-	print("bound test")
+	fig, ax = plt.subplots(1,1)
 
-	rs = RoadSegment(road_center[0,:], road_width[0],rr.angle[0],
-					 road_center[1,:],road_width[1], rr.angle[1])
-	print("ends:", road_center[0,:], road_width[0], rr.angle[0])
-	print("ends:", road_center[1,:], road_width[1], rr.angle[1])
+	for i in range(len(rr.segments)):
+		rr.segment_ptr = i
+		xy = rr.evaluate(np.linspace(0,1,10))
+		print(i, "\n", xy)
+		ax.plot(xy[:,0], xy[:,1])
+		
+	rr.segment_ptr = 0
+
+	test_points = np.empty((50,2))
+	for i in range(50):
+		seg = rr.advance(0.05*5.0)
+		print(seg.dist_traveled/seg.curve.length)
+		pts = rr.evaluate(seg.dist_traveled/seg.curve.length)
+		
+		test_points[i,:] = np.reshape(pts,2)
+
+	
 
 
-	print("Box:\n", rs.bounds)
-
-	mp = 0.5*(road_center[0,:] + road_center[1,:])
-	print("midpoint", mp)
-	print("midpoint is in: ", mp in rs)
-	print("endpoint1 is in: ", road_center[0]+1e-6 in rs)
-	print("endpoint2 is out: ", road_center[2] not in rs)
-
-	x = np.linspace(road_center[0,0]-1, road_center[1,0]+1,10)
-	for i in range(4):
-		plt.plot(x, rs.bounds[i].slope*(x-rs.bounds[i].offset[0]) + rs.bounds[i].offset[1])
-	plt.scatter([road_center[0,0], road_center[1,0]],[road_center[0,1], road_center[1,1]],)
-	plt.scatter([0.5*(road_center[0,0]+ road_center[1,0]),], [0.5*(road_center[0,1]+ road_center[1,1]),])
+	plt.scatter(test_road[:,0], test_road[:,1])
+	#plt.scatter(test_points[:,0], test_points[:,1])
+	#plt.plot(test_points[:,0], test_points[:,1])
 
 	'''
+
 	print("change test")
 	coords = rr.to_body_frame(road_center, rr.angle[0])
 	print("angle", rr.angle)
@@ -245,6 +220,7 @@ if __name__ == "__main__":
 	plt.plot(road_center[:,0], road_center[:,1], label="xy", linestyle='--')
 	plt.legend()
 	print("\n\n")
+	'''
 	'''
 	fig2, ax = plt.subplots(1,1)
 	dists = np.empty(np.shape(road_width))
@@ -264,7 +240,7 @@ if __name__ == "__main__":
 		
 		x = np.linspace(start[0,0], end[0,0], 10)
 		
-		xfx = rr.to_world_frame(f(x), rr.angle[i])
+		xfx = rr.to_world_frame(f(x), rr.angle[i], rr.road_center[i,:])
 		xfx = f(x)
 		ax.plot(xfx[:,0], xfx[:,1], label="Segment {}".format(i))
 
@@ -274,15 +250,16 @@ if __name__ == "__main__":
 	x = rr.road_center[rr.p,0]
 	for i in range(20):
 
-		xy = rr.segments[-2](x)
+		xy = rr.fits[-2](x)
 		print("xy", xy)
 		points[i,:] = xy
 		x += 1.0*np.cos(rr.angle[rr.p])
 		xy[0,1] += 1.*np.sin(rr.angle[rr.p])
-		rr.advance(x, xy[0,1])
+		rr.advance(xy)
 
 	plt.scatter(points[:,0], points[:,1], label="test")
 	plt.xlim(-50,100)
 	plt.ylim(-50,150)
 	plt.legend()
+	'''
 	plt.show()
