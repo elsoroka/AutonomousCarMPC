@@ -6,7 +6,7 @@ import numpy as np
 import bezier
 N_POINTS = 20
 
-from collections import namedtuple
+from collections import namedtuple, deque
 
 class RoadSegment():
 	
@@ -134,24 +134,35 @@ class Roadrunner():
 		return self.segments[self.segment_ptr]
 
 	def evaluate(self, s:float or np.array)->np.array:
-		seg = self.segments[self.segment_ptr]
-
 		pts = None
-		if type(s) == float:
-			pts = seg.curve.evaluate(s)
-		else:
-			pts = seg.curve.evaluate_multi(s)
-		x_b = pts[0,:]
-		y_b = pts[1,:]
-	
-		x_b = np.reshape(x_b, (np.size(s),1))
-		y_b = np.reshape(y_b, (np.size(s),1))
-		fit_b = np.hstack([x_b, y_b])
-		return self.to_world_frame(fit_b, self.angle[self.segment_ptr], self.road_center[self.segment_ptr,:])
+
+		#if type(s) == float:
+		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate(s)
+		#else:
+		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate_multi(s)
+		
+		# test
+		pts = np.zeros((2,np.size(s)))
+		section = self.segments[self.segment_ptr:self.segment_ptr+2]
+		for seg in section:
+			if type(s) == float:
+				pts += seg.curve.evaluate(s)
+			else:
+				pts += seg.curve.evaluate_multi(s)
+		pts /= len(section)
+
+		
+		pts = np.transpose(pts)
+		return self.to_world_frame(pts, self.angle[self.segment_ptr], self.road_center[self.segment_ptr,:])
 
 
 	def get_segment(self)->RoadSegment:
 		return self.segments[self.segment_ptr]
+
+	def reset(self)->None:
+		self.segment_ptr = 0
+		for s in self.segments:
+			s.dist_traveled = 0.0
 
 
 	@staticmethod
@@ -189,12 +200,7 @@ if __name__ == "__main__":
 
 	fig, ax = plt.subplots(1,1)
 
-	for i in range(len(rr.segments)):
-		rr.segment_ptr = i
-		xy = rr.evaluate(np.linspace(0,1,10))
-		ax.plot(xy[:,0], xy[:,1])
-		
-	rr.segment_ptr = 0
+	rr.reset()
 
 	test_points = np.empty((100,2))
 	for i in range(100):
