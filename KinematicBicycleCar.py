@@ -75,9 +75,9 @@ class KinematicBicycleCar(AbstractBaseCar):
 		for i, s in enumerate(self.dae.x):
 			self.dae.set_start(s.name(), ic[i])
 		if None == self.state_estimate:
-			self.state_estimate = np.empty((5,self.N))
+			self.state_estimate = np.empty((5,self.N+1))
 			for i in range(5):
-				self.state_estimate[i,:] = ic[i]*np.ones(self.N)
+				self.state_estimate[i,:] = ic[i]*np.ones(self.N+1)
 
 
 	def set_fixed_point(self, k:int, fixed_upper:np.array, fixed_lower:np.array)->None:

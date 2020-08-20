@@ -21,17 +21,33 @@
 #     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #
+
+
+# File MODIFIED from example direct_collocation.py provided with CasADi
+# to manage an MPC problem using a CasADI dynamics model and symbolic cost
+# using direct collocation to handle the dynamics
+
 import casadi as ca
 import numpy as np
 import matplotlib.pyplot as plt
 
 class MpcProblem:
 
-    def __init__(self, model, cost):        # casadi symbolic objective
+    def __init__(self, model, cost, # casadi symbolic objective
+                 lowerbounds_x, upperbounds_x, # callables
+                 lowerbounds_u, upperbounds_u, # callables
+                 road_center, # callable
+                 ): 
 
         self.model = model
         self.sys  = model.getDae()
         self.cost = cost
+        self.lowerbounds_x = lowerbounds_x
+        self.upperbounds_x = upperbounds_x
+        self.lowerbounds_u = lowerbounds_u
+        self.upperbounds_u = upperbounds_u
+        self.road_center   = road_center
+        
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
         self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
 
@@ -102,6 +118,8 @@ class MpcProblem:
         w0.append(self.ic)
         x_plot.append(Xk)
 
+        self.attractive_cost = 0.0
+
         # Create a matrix function
         # HACK: breaks if multiple state variables instead of one vector state
         # same for multiple control variables instead of one vector control!
@@ -115,8 +133,8 @@ class MpcProblem:
             # New NLP variable for the control
             Uk = ca.MX.sym("U_"+str(k), self.model.m)
             w.append(Uk)
-            lbw.append(np.reshape(self.model.lowerbounds_u(k), (self.model.m,)))
-            ubw.append(np.reshape(self.model.upperbounds_u(k), (self.model.m,)))
+            lbw.append(np.reshape(self.lowerbounds_u(self.model, k), (self.model.m,)))
+            ubw.append(np.reshape(self.upperbounds_u(self.model, k), (self.model.m,)))
             w0.append(np.zeros((self.model.m,)))
             u_plot.append(Uk)
 
@@ -126,8 +144,8 @@ class MpcProblem:
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
-                lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
-                ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+                lbw.append(np.reshape(self.lowerbounds_x(self.model, k), (self.model.n,)))
+                ubw.append(np.reshape(self.upperbounds_x(self.model, k), (self.model.n,)))
                 w0.append(np.zeros((self.model.n,)))
 
             # Loop over collocation points
@@ -152,8 +170,8 @@ class MpcProblem:
             # New NLP variable for state at end of interval
             Xk = ca.MX.sym('X_' + str(k+1), self.model.n)
             w.append(Xk)
-            lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
-            ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+            lbw.append(np.reshape(self.lowerbounds_x(self.model, k+1), (self.model.n,)))
+            ubw.append(np.reshape(self.upperbounds_x(self.model, k+1), (self.model.n,)))
             w0.append(np.zeros((self.model.n, )))
             x_plot.append(Xk)
 
@@ -161,6 +179,15 @@ class MpcProblem:
             g.append(Xk_end-Xk)
             lbg.append(np.zeros((self.model.n,)))
             ubg.append(np.zeros((self.model.n,)))
+
+            # Weakly attract state to middle of road
+            xy_k = self.road_center(self.model, k+1)
+            print(k, "xy_k", xy_k)
+            self.attractive_cost += 0.1*((Xk[0]-xy_k[0])**2 + (Xk[1]-xy_k[1])**2)
+
+            f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
+                        [self.sys.ode[0], self.cost+self.attractive_cost],
+                        ['x', 'u'],['xdot', 'L'])
 
         # Concatenate vectors
         w = ca.vertcat(*w)

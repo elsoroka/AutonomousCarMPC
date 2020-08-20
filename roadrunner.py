@@ -126,21 +126,23 @@ class Roadrunner():
 		while seg.curve.length/self.P < seg.dist_traveled:
 			step = seg.dist_traveled - seg.curve.length/self.P
 			self.segment_ptr += 1
-			print("ptr is ", self.segment_ptr)
+			#print("ptr is ", self.segment_ptr)
 
 			seg = self.segments[self.segment_ptr]
 			seg.dist_traveled += step
 
 		return self.segments[self.segment_ptr]
 
-	def evaluate(self, s:float or np.array)->np.array:
+	def evaluate(self, s=None)->np.array:
+		# s can be float or np.array or if none, evaluate at current point
 		pts = None
 
 		#if type(s) == float:
 		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate(s)
 		#else:
 		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate_multi(s)
-		
+		if None == s:
+			s = float(self.segments[self.segment_ptr].dist_traveled/self.segments[self.segment_ptr].curve.length)
 		# test
 		pts = np.zeros((2,np.size(s)))
 		section = self.segments[self.segment_ptr:self.segment_ptr+2]
@@ -155,6 +157,11 @@ class Roadrunner():
 		pts = np.transpose(pts)
 		return self.to_world_frame(pts, self.angle[self.segment_ptr], self.road_center[self.segment_ptr,:])
 
+	def get_width(self)->float:
+		return self.road_width[self.segment_ptr]
+	
+	def get_angle(self)->float:
+		return self.angle[self.segment_ptr]
 
 	def get_segment(self)->RoadSegment:
 		return self.segments[self.segment_ptr]
@@ -163,6 +170,10 @@ class Roadrunner():
 		self.segment_ptr = 0
 		for s in self.segments:
 			s.dist_traveled = 0.0
+
+	def evaluate_at(self, dist)->np.array:
+		seg = self.advance(dist)
+		return self.evaluate(float(seg.dist_traveled/seg.curve.length))
 
 
 	@staticmethod
@@ -210,65 +221,8 @@ if __name__ == "__main__":
 		test_points[i,:] = pts
 
 	
-
-
 	plt.scatter(test_road[:,0], test_road[:,1])
 	plt.plot(test_points[:,0], test_points[:,1])
 	plt.scatter(test_points[:,0], test_points[:,1])
 
-	'''
-
-	print("change test")
-	coords = rr.to_body_frame(road_center, rr.angle[0])
-	print("angle", rr.angle)
-	print(coords)
-	plt.plot(coords[:,0], coords[:,1],label="T(xy)")
-	coords = rr.to_world_frame(coords, rr.angle[0])
-	print(coords)
-	plt.plot(coords[:,0], coords[:,1], label="T(T(xy))", linewidth=3.0)
-	plt.plot(road_center[:,0], road_center[:,1], label="xy", linestyle='--')
-	plt.legend()
-	print("\n\n")
-	'''
-	'''
-	fig2, ax = plt.subplots(1,1)
-	dists = np.empty(np.shape(road_width))
-	for i in range(16):
-		dists[i] = np.sqrt((road_center[i+1,0]-road_center[i,0])**2 + \
-			(road_center[i+1,1]-road_center[i,1])**2)
-	dists[-1] = dists[-2]
-	vx = np.multiply(dists, np.cos(rr.angle))
-	vy = np.multiply(dists, np.sin(rr.angle))
-	ax.quiver(road_center[:,0], road_center[:,1], vx, vy)
-
-	for i in range(0,len(road_width)-N_POINTS):
-		rr.p = i
-		f = rr.new_segment(i)
-		start = rr.to_body_frame(road_center[i:i+1,:], rr.angle[i])
-		end = rr.to_body_frame(road_center[i+N_POINTS:i+N_POINTS+1,:], rr.angle[i])
-		
-		x = np.linspace(start[0,0], end[0,0], 10)
-		
-		xfx = rr.to_world_frame(f(x), rr.angle[i], rr.road_center[i,:])
-		xfx = f(x)
-		ax.plot(xfx[:,0], xfx[:,1], label="Segment {}".format(i))
-
-	rr.p = 1
-
-	points = np.empty((20,2))
-	x = rr.road_center[rr.p,0]
-	for i in range(20):
-
-		xy = rr.fits[-2](x)
-		print("xy", xy)
-		points[i,:] = xy
-		x += 1.0*np.cos(rr.angle[rr.p])
-		xy[0,1] += 1.*np.sin(rr.angle[rr.p])
-		rr.advance(xy)
-
-	plt.scatter(points[:,0], points[:,1], label="test")
-	plt.xlim(-50,100)
-	plt.ylim(-50,150)
-	plt.legend()
-	'''
 	plt.show()
