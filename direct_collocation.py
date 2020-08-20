@@ -185,9 +185,9 @@ class MpcProblem:
             print(k, "xy_k", xy_k)
             self.attractive_cost += 0.1*((Xk[0]-xy_k[0])**2 + (Xk[1]-xy_k[1])**2)
 
-            f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
-                        [self.sys.ode[0], self.cost+self.attractive_cost],
-                        ['x', 'u'],['xdot', 'L'])
+        f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
+                    [self.sys.ode[0], self.cost+self.attractive_cost],
+                    ['x', 'u'],['xdot', 'L'])
 
         # Concatenate vectors
         w = ca.vertcat(*w)
