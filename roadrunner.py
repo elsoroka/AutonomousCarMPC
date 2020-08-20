@@ -123,8 +123,13 @@ class Roadrunner():
 		seg = self.segments[self.segment_ptr]
 		seg.dist_traveled += step
 		# We have finished traversing this curve:
-		if seg.curve.length/self.P <= seg.dist_traveled:
+		while seg.curve.length/self.P < seg.dist_traveled:
+			step = seg.dist_traveled - seg.curve.length/self.P
 			self.segment_ptr += 1
+			print("ptr is ", self.segment_ptr)
+
+			seg = self.segments[self.segment_ptr]
+			seg.dist_traveled += step
 
 		return self.segments[self.segment_ptr]
 
@@ -187,25 +192,23 @@ if __name__ == "__main__":
 	for i in range(len(rr.segments)):
 		rr.segment_ptr = i
 		xy = rr.evaluate(np.linspace(0,1,10))
-		print(i, "\n", xy)
 		ax.plot(xy[:,0], xy[:,1])
 		
 	rr.segment_ptr = 0
 
-	test_points = np.empty((50,2))
-	for i in range(50):
-		seg = rr.advance(0.05*5.0)
-		print(seg.dist_traveled/seg.curve.length)
+	test_points = np.empty((100,2))
+	for i in range(100):
+		seg = rr.advance(1)
 		pts = rr.evaluate(seg.dist_traveled/seg.curve.length)
 		
-		test_points[i,:] = np.reshape(pts,2)
+		test_points[i,:] = pts
 
 	
 
 
 	plt.scatter(test_road[:,0], test_road[:,1])
-	#plt.scatter(test_points[:,0], test_points[:,1])
-	#plt.plot(test_points[:,0], test_points[:,1])
+	plt.plot(test_points[:,0], test_points[:,1])
+	plt.scatter(test_points[:,0], test_points[:,1])
 
 	'''
 
