@@ -49,7 +49,7 @@ class MpcProblem:
         self.road_center   = road_center
         
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
-        self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
+        self.sim = ca.integrator('F', 'cvodes', params, {'t0':0, 'tf':model.step})
 
         # Set up collocation (from direct_collocation example)
 
@@ -119,6 +119,9 @@ class MpcProblem:
         x_plot.append(Xk)
 
         self.attractive_cost = 0.0
+        self.jerk_cost = 0.0
+        self.steering_change_cost = 0.0
+        self.Uk_prev = None
 
         # Create a matrix function
         # HACK: breaks if multiple state variables instead of one vector state
@@ -135,8 +138,16 @@ class MpcProblem:
             w.append(Uk)
             lbw.append(np.reshape(self.lowerbounds_u(self.model, k), (self.model.m,)))
             ubw.append(np.reshape(self.upperbounds_u(self.model, k), (self.model.m,)))
-            w0.append(np.zeros((self.model.m,)))
+           # w0.append(np.zeros((self.model.m,)))
+            w0.append(self.model.control_estimate[:,k])
             u_plot.append(Uk)
+
+            # Add to control change costs
+            if None != self.Uk_prev:
+                self.jerk_cost += (Uk[0]-self.Uk_prev[0])**2
+                self.steering_change_cost += (Uk[1]-self.Uk_prev[1])**2
+
+            self.Uk_prev = Uk
 
             # State at collocation points
             Xc = []
@@ -146,7 +157,8 @@ class MpcProblem:
                 w.append(Xkj)
                 lbw.append(np.reshape(self.lowerbounds_x(self.model, k), (self.model.n,)))
                 ubw.append(np.reshape(self.upperbounds_x(self.model, k), (self.model.n,)))
-                w0.append(np.zeros((self.model.n,)))
+                #w0.append(np.zeros((self.model.n,)))
+                w0.append(self.model.state_estimate[:,k])
 
             # Loop over collocation points
             Xk_end = self._D[0]*Xk
@@ -172,7 +184,8 @@ class MpcProblem:
             w.append(Xk)
             lbw.append(np.reshape(self.lowerbounds_x(self.model, k+1), (self.model.n,)))
             ubw.append(np.reshape(self.upperbounds_x(self.model, k+1), (self.model.n,)))
-            w0.append(np.zeros((self.model.n, )))
+            #w0.append(np.zeros((self.model.n, )))
+            w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
 
             # Add equality constraint
@@ -182,11 +195,22 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             xy_k = self.road_center(self.model, k+1)
-            self.attractive_cost += ((Xk[0]-xy_k[0])**2 + (Xk[1]-xy_k[1])**2)
+
+            self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
+                                     (Xk[1]-xy_k[1])**2 + \
+                                     (Xk[3]-xy_k[2])**2)
             print("Attracting ", Xk[0], k+1, "to ", xy_k)
 
+        
+        # This attracts the car to the middle of the road
+        cost = 10.0*self.attractive_cost + \
+               1.0*self.jerk_cost + \
+               10.0*180/np.pi*self.steering_change_cost
+               # Several papers make this really big
+
+
         f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
-                    [self.sys.ode[0], self.cost+self.attractive_cost],
+                    [self.sys.ode[0], cost],
                     ['x', 'u'],['xdot', 'L'])
 
         # Concatenate vectors
@@ -215,8 +239,9 @@ class MpcProblem:
         self.x_opt = x_opt.full() # to numpy array
         self.u_opt = u_opt.full() # to numpy array
 
-        # Feed the velocity at N = 30 points back to the model
+        # Feed the previous stateback to the model
         self.model.set_state_estimate(self.x_opt)
+        self.model.set_control_estimate(self.u_opt)
         self.model.c += 1
 
         return self.x_opt, self.u_opt

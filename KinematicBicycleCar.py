@@ -65,6 +65,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		mpl.rcParams['axes.grid'] = True
 
 		self.state_estimate = None
+		self.control_estimate = np.zeros((self.m, self.N))
 		self.c = 0
 
 
@@ -96,7 +97,20 @@ class KinematicBicycleCar(AbstractBaseCar):
 		# Will crash if k not iterable.
 
 	def set_state_estimate(self, state_estimate:np.array):
-		self.state_estimate = state_estimate
+		# The state estimate is the previous optimal state
+		# so we take the state at time k+1 for our new time k
+		self.state_estimate[:,:-1] = state_estimate[:,1:]
+		# The last one, we don't know. So we guess it's
+		# the second-to-last one.
+		self.state_estimate[:,-1] = self.state_estimate[:,-2]
+
+	def set_control_estimate(self, control_estimate:np.array):
+		# The control estimate is the previous optimal control
+		# so we take the control at time k+1 for our new time k
+		self.control_estimate[:,:-1] = control_estimate[:,1:]
+		# The last one, we don't know. So we guess it's
+		# the second-to-last one.
+		self.control_estimate[:,-1] = self.control_estimate[:,-2]
 	
 	
 	# CONSTRAINT HANDLERS
@@ -201,12 +215,12 @@ class KinematicBicycleCar(AbstractBaseCar):
 		ax2.plot(t, boundary_low[:,1], color='gray')
 
 		# Plot the executed steps
-		t = np.linspace(0, 0.05*(np.size(x_executed)//5-1), np.size(x_executed)//5)
+		t = np.linspace(0, 0.05*(np.size(x_executed)//self.n-1), np.size(x_executed)//self.n)
 		ax1.plot(t, x_executed[0,:], color='blue')
 		ax2.plot(t, x_executed[1,:], color='blue')
 
 		# Plot the planned steps
-		t = t[-1] + np.linspace(0, 0.05*(np.size(x_planned)//5-1), np.size(x_planned)//5)
+		t = t[-1] + np.linspace(0, 0.05*(np.size(x_planned)//self.n-1), np.size(x_planned)//self.n)
 		ax1.plot(t, x_planned[0,:], color='orange')
 		ax2.plot(t, x_planned[1,:], color='orange')
 

@@ -141,7 +141,7 @@ class Roadrunner():
 		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate(s)
 		#else:
 		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate_multi(s)
-		if None == s:
+		if s is None:
 			s = float(self.segments[self.segment_ptr].dist_traveled/self.segments[self.segment_ptr].curve.length)
 		# test
 		pts = np.zeros((2,np.size(s)))
