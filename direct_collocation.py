@@ -182,8 +182,8 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             xy_k = self.road_center(self.model, k+1)
-            print(k, "xy_k", xy_k)
-            self.attractive_cost += 0.1*((Xk[0]-xy_k[0])**2 + (Xk[1]-xy_k[1])**2)
+            self.attractive_cost += ((Xk[0]-xy_k[0])**2 + (Xk[1]-xy_k[1])**2)
+            print("Attracting ", Xk[0], k+1, "to ", xy_k)
 
         f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
                     [self.sys.ode[0], self.cost+self.attractive_cost],

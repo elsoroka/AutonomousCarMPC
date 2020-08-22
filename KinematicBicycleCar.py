@@ -16,7 +16,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		self.dae = casadi.DaeBuilder()
 		
 		# Parameters
-		self.n = 5 # states
+		self.n = 4
 		self.m = 2 # controls
 		self.N    = N
 		self.step = step
@@ -35,14 +35,17 @@ class KinematicBicycleCar(AbstractBaseCar):
 		y    = z[1]
 		v    = z[2]
 		psi  = z[3]
-		beta = z[4]
 
-		self.STATE_NAMES = ['x', 'y', 'v', 'psi', 'beta']
+		#self.STATE_NAMES = ['x', 'y', 'v', 'psi', 'beta']
+		self.STATE_NAMES = ['x', 'y', 'v', 'psi',]
 		 
 		# Controls
 		u       = self.dae.add_u('u',self.m)       # acceleration
 		a       = u[0]
 		delta_f = u[1] # front steering angle
+		
+		# This is a weird "state".
+		beta = casadi.arctan(self.lr/(self.lr + self.lf)*casadi.tan(delta_f))
 
 		self.CONTROL_NAMES = ['a', 'delta_f']
 
@@ -51,10 +54,8 @@ class KinematicBicycleCar(AbstractBaseCar):
 		ydot = v*casadi.sin(psi + beta)
 		vdot = a
 		psidot  = v/self.lr*casadi.sin(beta)
-		betadot = v/(self.lf + self.lr)*casadi.tan(delta_f) - \
-		          v/self.lr*casadi.sin(beta)
 
-		zdot = casadi.vertcat(xdot, ydot, vdot, psidot, betadot)
+		zdot = casadi.vertcat(xdot, ydot, vdot, psidot)
 		self.dae.add_ode('zdot', zdot)
 
 
@@ -75,8 +76,8 @@ class KinematicBicycleCar(AbstractBaseCar):
 		for i, s in enumerate(self.dae.x):
 			self.dae.set_start(s.name(), ic[i])
 		if None == self.state_estimate:
-			self.state_estimate = np.empty((5,self.N+1))
-			for i in range(5):
+			self.state_estimate = np.empty((self.n,self.N+1))
+			for i in range(self.n):
 				self.state_estimate[i,:] = ic[i]*np.ones(self.N+1)
 
 
@@ -111,7 +112,7 @@ class KinematicBicycleCar(AbstractBaseCar):
                   			self.state_estimate[1,0] + np.sin((k+self.c)*np.pi/60)+1,#1.0,
                   			20.0,
                   			np.pi/4,
-                  			np.pi/4])
+							])
 
 	def lowerbounds_x(self, k:int)->np.array:
 		if k in self.fixed_points.keys():
@@ -121,7 +122,7 @@ class KinematicBicycleCar(AbstractBaseCar):
                   			 self.state_estimate[1,0] + np.sin((k+self.c)*np.pi/60)-1,#-1.0,
                  			  0.0,
                  			 -np.pi/4,
-                 			 -np.pi/4])
+                 			 ])
 
 
 	def upperbounds_u(self, k:int)->np.array:
