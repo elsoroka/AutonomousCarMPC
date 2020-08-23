@@ -175,14 +175,14 @@ class KinematicBicycleCar(AbstractBaseCar):
 
 	def plot_x(self, x_executed:np.array, x_planned:np.array):
 		fig2, ax = plt.subplots(1,1,
-			figsize=(12, 4))
+			figsize=(14, 6))
 
 		# Plot the last optimal path computed
 		tgrid = np.linspace(0, self.T, self.N)
 		vx = np.multiply(x_planned[2],np.cos(x_planned[3]))
 		vy = np.multiply(x_planned[2],np.sin(x_planned[3]))
 		q = ax.quiver(x_planned[0], x_planned[1], vx, vy,
-					  color='orange', linewidth=0.5)
+					  color='orange', linewidth=0.5,)
 		ax.quiverkey(q, X=0.25, Y=0.2, U=5,
 					 label='Planned', labelpos='E')
 
@@ -191,7 +191,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		vx = np.multiply(x_executed[2],np.cos(x_executed[3]))
 		vy = np.multiply(x_executed[2],np.sin(x_executed[3]))
 		q = ax.quiver(x_executed[0], x_executed[1], vx, vy,
-					  color='blue', linewidth=0.5)
+					  color='blue', linewidth=0.5,)
 		ax.quiverkey(q, X=0.25, Y=0.1, U=5,
 					 label='Velocity', labelpos='E')
 
