@@ -10,10 +10,10 @@
 # loop road points / queue
 # use center of each curve fit, not first piece
 
-import numpy as np
+import numpy             as np
+import matplotlib.pyplot as plt
 import bezier
 from collections import namedtuple
-N_POINTS = 20
 
 Segment = namedtuple('Segment', ['curve', 'start_pct', 'end_pct'])
 
@@ -55,11 +55,13 @@ class Roadrunner:
 			end_idx = int(P*self.end_pct)
 			start_idx = int(P*self.start_pct)
 
-			print("start (world)", road_center[i], "angle", self.angles[i])
-			
-			start_xy = self.to_body_frame(self.road_center[i+start_idx:i+start_idx+1], self.angles[i], offset=self.road_center[i,:])
+			if i == 0:
+				start_xy = self.to_body_frame(self.road_center[i+start_idx:i+start_idx+1], self.angles[i], offset=self.road_center[i,:])
+			else:
+				start_xy = prev_end_xy
 			end_xy   = self.to_body_frame(self.road_center[i+end_idx  :i+end_idx+1],   self.angles[i], offset=self.road_center[i,:])
-			print("start (0.4)", start_xy, "\nend (0.6):", end_xy)
+			prev_end_xy = end_xy
+
 			self.segments.append(Segment(curve=curve,
 										 start_pct = curve.locate(np.asfortranarray(np.reshape(start_xy,(2,1)))),
 										 end_pct   = curve.locate(np.asfortranarray(np.reshape(end_xy,  (2,1)))),
@@ -136,6 +138,28 @@ class Roadrunner:
 		self.current_pct = self.segments[self._segment_ptr].start_pct
 
 
+	# PLOTTING
+	def plot(self, ax=None, n_points=10):
+		'''If given ax, draw on ax, else make a new plot.
+		n_points: Number of points to plot.'''
+		if ax is None:
+			fig,ax = plt.subplots(1,1)
+
+		s = np.linspace(self.start_pct, self.end_pct, n_points)
+
+		for i,seg in enumerate(rr.segments):
+			# Recall these points are fit in the car body frame
+			xy = np.transpose(seg.curve.evaluate_multi(s))
+			# Transform back to world frame
+			xy = rr.to_world_frame(xy,rr.angles[i*4], offset=rr.road_center[i*4,:])
+			# Plot the points
+			ax.plot(xy[:,0], xy[:,1])
+
+		return ax
+
+
+	# Transformations between body and world frame
+
 	@staticmethod
 	def to_body_frame(road_center:np.array, angle:float, offset=None)->np.array:
 		
@@ -179,20 +203,7 @@ if __name__ == "__main__":
 
 	import matplotlib.pyplot as plt
 	fig,ax = plt.subplots(1,1)
-	fig2,ax2 = plt.subplots(1,1)
-	s = np.linspace(0.4,0.6,10)
-	for i,seg in enumerate(rr.segments):
-		xy = np.transpose(seg.curve.evaluate_multi(s))
-
-		print("angle", rr.angles[i*4])
-		print("offset", i*4, rr.road_center[i*4])
-		print("xy (body)\n", xy)
-		
-		xy = rr.to_world_frame(xy,rr.angles[i*4], offset=rr.road_center[i*4,:])
-		print("xy (world)\n", xy)
-		ax.scatter(xy[:,0], xy[:,1])
-		ax.plot(xy[:,0], xy[:,1])
-		seg.curve.plot(10, ax=ax2)
+	rr.plot(ax)
 
 
 	plt.show()
