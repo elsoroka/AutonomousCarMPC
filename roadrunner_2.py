@@ -20,7 +20,7 @@ Segment = namedtuple('Segment', ['curve', 'start_pct', 'end_pct'])
 class Roadrunner:
 
 	def __init__(self, road_center:np.array, road_width:np.array,
-		P=20, start_pct = 0.4, end_pct = 0.6):
+		P=10, start_pct = 0.3, end_pct = 0.7):
 
 		self.P = P # Number of points to fit at one time
 		self.start_pct = start_pct # Percentage length to start using the curve
@@ -42,36 +42,37 @@ class Roadrunner:
 
 		# Fill in the last angle based on the second-to-last.
 		self.angles[-1] = self.angles[-2]
+		
 
-		# Fit segments to the road points
 		self.segments = []
+		# Fit segments to the road points
 		i = 0
+		# so if P = 20 and end_pct = 60%, we get 12.
+		end_idx = int(P*self.end_pct)
+		start_idx = int(P*self.start_pct)
+
 		while i < n_points-P:
 			curve = bezier.Curve.from_nodes( \
 			    np.asfortranarray(np.transpose( \
 				self.to_body_frame(road_center[i:i+P], self.angles[i])
 				)))
-			# so if P = 20 and end_pct = 60%, we get 12.
-			end_idx = int(P*self.end_pct)
-			start_idx = int(P*self.start_pct)
 
-			if i == 0:
-				start_xy = self.to_body_frame(self.road_center[i+start_idx:i+start_idx+1], self.angles[i], offset=self.road_center[i,:])
-			else:
-				start_xy = prev_end_xy
+			start_xy = self.to_body_frame(self.road_center[i+start_idx:i+start_idx+1], self.angles[i], offset=self.road_center[i,:])
 			end_xy   = self.to_body_frame(self.road_center[i+end_idx  :i+end_idx+1],   self.angles[i], offset=self.road_center[i,:])
-			prev_end_xy = end_xy
 
-			self.segments.append(Segment(curve=curve,
-										 start_pct = curve.locate(np.asfortranarray(np.reshape(start_xy,(2,1)))),
-										 end_pct   = curve.locate(np.asfortranarray(np.reshape(end_xy,  (2,1)))),
+			start_pct,_ = Roadrunner.find_closest_pt(curve, np.reshape(start_xy,(2,1)))
+			end_pct,_   = Roadrunner.find_closest_pt(curve, np.reshape(end_xy,  (2,1)))
+			self.segments.append(Segment(curve     = curve,
+										 start_pct = start_pct,
+										 end_pct   = end_pct,
 								))
 			# Then we should start the next curve at i + (end_pt - start_pt)
 			i += (end_idx - start_idx)
 
 			print("Incremented i to", i)
 			print("Added:\n", self.segments[-1])
-		# Initialization
+
+		# Set distances traveled to 0.
 		self.reset()
 
 		# OK so we want to store the start/end point on the curve
@@ -137,6 +138,47 @@ class Roadrunner:
 		self.dist_traveled_xy = 0.0
 		self.current_pct = self.segments[self._segment_ptr].start_pct
 
+	@staticmethod
+	def _find_closest_in_x_to_pt(curve, x, match_pt):
+		# We're looking for the closest point on the curve
+		# to some point match_pt that is NOT on the curve
+		min_dist = np.inf
+		min_idx = 0
+		for i, xi in enumerate(x):
+
+			dist = np.linalg.norm(curve.evaluate(xi) - match_pt,2)
+			if dist < min_dist:
+				min_dist = dist
+				min_idx = i
+		return min_idx, dist
+
+	@staticmethod
+	def find_closest_pt(curve, match_pt:np.array, runs=3)->(float, float):
+		'''Given an xy point match_pt, find the closest point on the curve B.
+		Returns the corresponding s for the curve B(s) and the distance
+		between match_pt and B(s) (which can be 0 if match_pt is on B).
+		Not guaranteed to work if match_pt is not "close" to B.'''
+		
+		# Will be the correct value if match_pt is on the curve
+		min_s, dist = curve.locate(match_pt), 0.0
+		if min_s is None: # otherwise it's None
+
+			start = 0.0; end = 1.0; # start by searching the whole interval
+			x = None
+			for r in range(runs):
+				x = np.linspace(start,end,10)
+				min_idx,dist = Roadrunner._find_closest_in_x_to_pt(curve, x, match_pt)
+				min_s = x[min_idx]
+
+				start = np.max([0.0, x[min_idx]-1/(10*(r+1))])
+				end = np.min([1.0, x[min_idx]+1/(10*(r+1))])
+
+			# Check: if this closest point is "too far"
+			if dist > 2.5:
+				print("find_closest_pt may be unreliable: closest match found for {} is {} away at s = {}, B(s) = {}".format(match_pt, dist, min_s, curve.evaluate(min_s)))
+
+			return min_s, dist
+
 
 	# PLOTTING
 	def plot(self, ax=None, n_points=10):
@@ -146,12 +188,18 @@ class Roadrunner:
 			fig,ax = plt.subplots(1,1)
 
 		s = np.linspace(self.start_pct, self.end_pct, n_points)
+		
 
 		for i,seg in enumerate(rr.segments):
+			# Figure out how many new points in each curve
+			end_idx = int(self.P*seg.end_pct)
+			start_idx = int(self.P*seg.start_pct)
+			i_step = end_idx - start_idx
+
 			# Recall these points are fit in the car body frame
 			xy = np.transpose(seg.curve.evaluate_multi(s))
 			# Transform back to world frame
-			xy = rr.to_world_frame(xy,rr.angles[i*4], offset=rr.road_center[i*4,:])
+			xy = rr.to_world_frame(xy,rr.angles[i*i_step], offset=rr.road_center[i*i_step,:])
 			# Plot the points
 			ax.plot(xy[:,0], xy[:,1])
 
