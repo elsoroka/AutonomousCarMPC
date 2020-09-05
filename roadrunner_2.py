@@ -73,8 +73,6 @@ class Roadrunner:
 			# Then we should start the next curve at i + (end_pt - start_pt)
 			i += (end_idx - start_idx)
 
-			print("Incremented i to", i)
-			print("Added:\n", self.segments[-1])
 
 		# Set distances traveled to 0.
 		self.reset()
@@ -104,23 +102,19 @@ class Roadrunner:
 		state = None
 		if (np.sign(offset_pct) ==  1 and  offset_pct >= seg.end_pct - self.current_pct) or \
 		   (np.sign(offset_pct) == -1 and -offset_pct >= self.current_pct - seg.start_pct):
+			# save current state
 		   state = self.save_state()
 		   self.advance(offset_xy)
+
+		   # reset since we saved the state
 		   offset_xy = 0.0; offset_pct = 0.0
-		   print("evaluate: advanced to ", self._segment_ptr, "/", len(self.segments))
 		   seg = self.segments[self._segment_ptr]
-
-
-		print("Offset_pct", offset_pct)
-		print("Current_pct", self.current_pct)
-		print("seg", seg, "\n")
 		
 		result = seg.curve.evaluate(self.current_pct + offset_pct)
 		result = self.to_world_frame(np.reshape(result,(1,2)), \
 									 angle=seg.transform_angle,
 								     offset=seg.transform_offset)
-
-
+		# restore current state
 		if state is not None:
 			self.reset(**state)
 
@@ -129,7 +123,6 @@ class Roadrunner:
 
 	def advance(self, step_xy=0.0):
 		# curve length
-		print("advance: at ", self._segment_ptr, "/", len(self.segments))
 		seg = self.segments[self._segment_ptr]
 
 		# Convert the step in meters to a step as a percentage
@@ -151,11 +144,9 @@ class Roadrunner:
 				seg = self.segments[self._segment_ptr]
 				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
 					print("WARNING: you have run out of road points!")
-				print("Incremented segment_ptr to ", self._segment_ptr)
 
 				# Now we're at the beginning of the new curve
 				self.current_pct = seg.start_pct
-				print("step_pct is now", step_pct)
 
 		elif step_pct < 0.0:
 			step_pct = np.abs(step_pct) # now it's positive and easier to work with
@@ -165,17 +156,16 @@ class Roadrunner:
 				self.dist_traveled_xy += seg.curve.length*(self.current_pct - seg.start_pct)
 				self._segment_ptr -= 1
 				seg = self.segments[self._segment_ptr]
-				print("Decremented segment_ptr to ", self._segment_ptr)
+
 				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
 					print("WARNING: you have run out of road points!")
 				self.current_pct = seg.end_pct
-				print("step_pct is now", step_pct)
 
 			step_pct *= -1 # reset sign so the remainder is correctly negative
 		
 		# Add any leftover step after we advanced the segment_ptr.
 		self.current_pct += step_pct
-		print("Advanced to", self.current_pct)
+		#print("Advanced to", self.current_pct)
 		# Done!
 
 		
@@ -309,6 +299,9 @@ if __name__ == "__main__":
 	rr = Roadrunner(test_road, test_width)
 
 	import matplotlib.pyplot as plt
+
+	print("Generating self-test plot...")
+	
 	fig,ax = plt.subplots(1,1)
 	rr.plot(ax)
 	rr.reset(segment_ptr=5) # approximately the middle of the road points
