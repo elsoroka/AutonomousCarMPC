@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import bezier
 from collections import namedtuple
 
-Segment = namedtuple('Segment', ['curve', 'start_pct', 'end_pct'])
+Segment = namedtuple('Segment', ['curve', 'start_pct', 'end_pct', 'transform_angle', 'transform_offset'])
 
 class Roadrunner:
 
@@ -52,19 +52,23 @@ class Roadrunner:
 		start_idx = int(P*self.start_pct)
 
 		while i < n_points-P:
-			curve = bezier.Curve.from_nodes( \
-			    np.asfortranarray(np.transpose( \
-				self.to_body_frame(road_center[i:i+P], self.angles[i])
-				)))
+			angle  = self.angles[i]
+			offset = self.road_center[i]
+			curve  = bezier.Curve.from_nodes( \
+			             np.asfortranarray(np.transpose( \
+			    	         self.to_body_frame(road_center[i:i+P], angle))
+			         ))
 
-			start_xy = self.to_body_frame(self.road_center[i+start_idx:i+start_idx+1], self.angles[i], offset=self.road_center[i,:])
-			end_xy   = self.to_body_frame(self.road_center[i+end_idx  :i+end_idx+1],   self.angles[i], offset=self.road_center[i,:])
+			start_xy = self.to_body_frame(self.road_center[i+start_idx:i+start_idx+1], angle, offset)
+			end_xy   = self.to_body_frame(self.road_center[i+end_idx  :i+end_idx+1],   angle, offset)
 
 			start_pct,_ = Roadrunner.find_closest_pt(curve, np.reshape(start_xy,(2,1)))
 			end_pct,_   = Roadrunner.find_closest_pt(curve, np.reshape(end_xy,  (2,1)))
 			self.segments.append(Segment(curve     = curve,
 										 start_pct = start_pct,
 										 end_pct   = end_pct,
+										 transform_angle  = angle,
+										 transform_offset = offset
 								))
 			# Then we should start the next curve at i + (end_pt - start_pt)
 			i += (end_idx - start_idx)
@@ -92,29 +96,87 @@ class Roadrunner:
 		#     0.4  0.6 
 		# -----------------
 		# scale to percentage of curve length
-		offset_pct = offset_xy/self.segments[self._segment_ptr].curve.length
-		return self.dist_traveled_xy + self.segments[self._segment_ptr].curve.evaluate(self.current_pct + offset_pct)
+		# If this offset will put us on another curve,
+		# save our state so we can get back to the right place
+		seg = self.segments[self._segment_ptr]
+		offset_pct = offset_xy/seg.curve.length
+		result = None
+		state = None
+		if (np.sign(offset_pct) ==  1 and  offset_pct >= seg.end_pct - self.current_pct) or \
+		   (np.sign(offset_pct) == -1 and -offset_pct >= self.current_pct - seg.start_pct):
+		   state = self.save_state()
+		   self.advance(offset_xy)
+		   offset_xy = 0.0; offset_pct = 0.0
+		   print("evaluate: advanced to ", self._segment_ptr, "/", len(self.segments))
+		   seg = self.segments[self._segment_ptr]
+
+
+		print("Offset_pct", offset_pct)
+		print("Current_pct", self.current_pct)
+		print("seg", seg, "\n")
+		
+		result = seg.curve.evaluate(self.current_pct + offset_pct)
+		result = self.to_world_frame(np.reshape(result,(1,2)), \
+									 angle=seg.transform_angle,
+								     offset=seg.transform_offset)
+
+
+		if state is not None:
+			self.reset(**state)
+
+		return result
 
 
 	def advance(self, step_xy=0.0):
 		# curve length
+		print("advance: at ", self._segment_ptr, "/", len(self.segments))
 		seg = self.segments[self._segment_ptr]
+
+		# Convert the step in meters to a step as a percentage
+		# of the current curve fit.
 		step_pct = step_xy/seg.curve.length 
-		# we are advancing along the path
+		
+
 		if step_pct > 0.0:
+			# While the step is larger than the rest of the curve
 			while step_pct > (seg.end_pct - self.current_pct):
-				step_pct -=  (seg.end_pct - self.current_pct)
+
+				# Advance to the next curve:
+				step_pct  -= (seg.end_pct - self.current_pct)
+
 				# Save the distance we traveled along this curve (k)
-				self.dist_traveled_xy += seg.curve.length*(seg.end_pct - seg.start_pct)
+				self.dist_traveled_xy += seg.curve.length*(seg.end_pct - self.current_pct)
 				# Increment the segment_ptr, so we now use a new curve (k+1)
 				self._segment_ptr += 1
-				self.current_pct = self.segments[self._segment_ptr].start_pct
-		#elif step < 0.0:
-	#		while step < (self.current_pct - self.start_pct)
-	# TODO: implement this
-			#print("Incremented segment_ptr")
+				seg = self.segments[self._segment_ptr]
+				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
+					print("WARNING: you have run out of road points!")
+				print("Incremented segment_ptr to ", self._segment_ptr)
 
+				# Now we're at the beginning of the new curve
+				self.current_pct = seg.start_pct
+				print("step_pct is now", step_pct)
+
+		elif step_pct < 0.0:
+			step_pct = np.abs(step_pct) # now it's positive and easier to work with
+			while step_pct > (self.current_pct - seg.start_pct):
+				step_pct  -= (self.current_pct - seg.start_pct)
+
+				self.dist_traveled_xy += seg.curve.length*(self.current_pct - seg.start_pct)
+				self._segment_ptr -= 1
+				seg = self.segments[self._segment_ptr]
+				print("Decremented segment_ptr to ", self._segment_ptr)
+				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
+					print("WARNING: you have run out of road points!")
+				self.current_pct = seg.end_pct
+				print("step_pct is now", step_pct)
+
+			step_pct *= -1 # reset sign so the remainder is correctly negative
+		
+		# Add any leftover step after we advanced the segment_ptr.
 		self.current_pct += step_pct
+		print("Advanced to", self.current_pct)
+		# Done!
 
 		
 	def get_width(self)->float:
@@ -132,11 +194,18 @@ class Roadrunner:
 		return np.arctan2(tangent_vector[1], tangent_vector[0])
 
 
-	def reset(self)->None:
-		'''Reset the roadrunner to the start of the road'''
-		self._segment_ptr = 0
-		self.dist_traveled_xy = 0.0
-		self.current_pct = self.segments[self._segment_ptr].start_pct
+	def reset(self, segment_ptr=0, dist_traveled_xy=0.0, current_pct_offset=0.0)->None:
+		'''Reset the roadrunner to the start of the road (default)
+		or to a specified location.'''
+		self._segment_ptr = segment_ptr
+		self.dist_traveled_xy = dist_traveled_xy
+		self.current_pct = self.segments[self._segment_ptr].start_pct + current_pct_offset
+
+	def save_state(self)->dict:
+		return {"segment_ptr"        : self._segment_ptr,
+				"dist_traveled_xy"   : self.dist_traveled_xy,
+				"current_pct_offset" : self.current_pct - self.segments[self._segment_ptr].start_pct}
+
 
 	@staticmethod
 	def _find_closest_in_x_to_pt(curve, x, match_pt):
@@ -144,12 +213,12 @@ class Roadrunner:
 		# to some point match_pt that is NOT on the curve
 		min_dist = np.inf
 		min_idx = 0
-		for i, xi in enumerate(x):
+		for idx, x_i in enumerate(x):
 
-			dist = np.linalg.norm(curve.evaluate(xi) - match_pt,2)
+			dist = np.linalg.norm(curve.evaluate(x_i) - match_pt,2)
 			if dist < min_dist:
 				min_dist = dist
-				min_idx = i
+				min_idx = idx
 		return min_idx, dist
 
 	@staticmethod
@@ -190,16 +259,11 @@ class Roadrunner:
 		s = np.linspace(self.start_pct, self.end_pct, n_points)
 		
 
-		for i,seg in enumerate(rr.segments):
-			# Figure out how many new points in each curve
-			end_idx = int(self.P*seg.end_pct)
-			start_idx = int(self.P*seg.start_pct)
-			i_step = end_idx - start_idx
-
+		for seg in self.segments:
 			# Recall these points are fit in the car body frame
 			xy = np.transpose(seg.curve.evaluate_multi(s))
 			# Transform back to world frame
-			xy = rr.to_world_frame(xy,rr.angles[i*i_step], offset=rr.road_center[i*i_step,:])
+			xy = rr.to_world_frame(xy,seg.transform_angle, seg.transform_offset)
 			# Plot the points
 			ax.plot(xy[:,0], xy[:,1])
 
@@ -217,20 +281,20 @@ class Roadrunner:
 			offset = np.reshape(road_center[0,:],2)
 		
 		new_center = np.empty(np.shape(road_center))
-		new_center[:,0] = np.multiply(road_center[:,0]-offset[0], np.cos(angle)) + \
-						  np.multiply(road_center[:,1]-offset[1], np.sin(angle))
+		new_center[:,0] = np.multiply(road_center[:,0]-offset[0],  np.cos(angle)) + \
+						  np.multiply(road_center[:,1]-offset[1],  np.sin(angle))
 		new_center[:,1] = np.multiply(road_center[:,0]-offset[0], -np.sin(angle)) + \
-						  np.multiply(road_center[:,1]-offset[1], np.cos(angle))
+						  np.multiply(road_center[:,1]-offset[1],  np.cos(angle))
 		return new_center
 
 	@staticmethod
 	def to_world_frame(road_center:np.array, angle:float, offset:np.array)->np.array:
 		new_center = np.empty(np.shape(road_center))
 
-		new_center[:,0] = np.multiply(road_center[:,0], np.cos(angle)) + \
+		new_center[:,0] = np.multiply(road_center[:,0],  np.cos(angle)) + \
 						  np.multiply(road_center[:,1], -np.sin(angle))
-		new_center[:,1] = np.multiply(road_center[:,0], np.sin(angle)) + \
-						  np.multiply(road_center[:,1], np.cos(angle))
+		new_center[:,1] = np.multiply(road_center[:,0],  np.sin(angle)) + \
+						  np.multiply(road_center[:,1],  np.cos(angle))
 		new_center[:,0] += offset[0]
 		new_center[:,1] += offset[1]
 		return new_center
@@ -243,15 +307,27 @@ if __name__ == "__main__":
 	(n_points,_) = np.shape(test_road)
 	test_width = 5.0*np.ones(n_points)
 	rr = Roadrunner(test_road, test_width)
-	#print(rr.evaluate(0.0))
-
-	#print(rr.segments[rr._segment_ptr].curve.length, "length")
-	#rr.advance(rr.segments[rr._segment_ptr].curve.length*0.2)
-	#print(rr.evaluate(0.0))
 
 	import matplotlib.pyplot as plt
 	fig,ax = plt.subplots(1,1)
 	rr.plot(ax)
+	rr.reset(segment_ptr=5) # approximately the middle of the road points
+	sgn = 1
+	points = np.empty((15,2))
 
+	# Test evaluating points AHEAD of our current point
+	for k in range(15):
+		xy = rr.evaluate(k*5)	
+		points[k,:] = np.reshape(xy, (1,2))
 
+	ax.scatter(points[:,0], points[:,1], color="blue", label="ahead of current point")
+
+	# Test evaluating points BEHIND our current point
+	for k in range(15):
+		xy = rr.evaluate(-k*5)	
+		points[k,:] = np.reshape(xy, (1,2))
+
+	ax.scatter(points[:,0], points[:,1], color="red", label="behind current point")
+
+	plt.legend()
 	plt.show()
