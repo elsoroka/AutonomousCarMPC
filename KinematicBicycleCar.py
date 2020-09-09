@@ -36,7 +36,6 @@ class KinematicBicycleCar(AbstractBaseCar):
 		v    = z[2]
 		psi  = z[3]
 
-		#self.STATE_NAMES = ['x', 'y', 'v', 'psi', 'beta']
 		self.STATE_NAMES = ['x', 'y', 'v', 'psi',]
 		 
 		# Controls
@@ -66,7 +65,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 
 		self.state_estimate = None
 		self.control_estimate = np.zeros((self.m, self.N))
-		self.c = 0
+
 
 
 	def getDae(self)->casadi.DaeBuilder:
@@ -74,12 +73,18 @@ class KinematicBicycleCar(AbstractBaseCar):
 
 	# Specify initial conditions
 	def set_initial(self, ic:[]):
-		for i, s in enumerate(self.dae.x):
-			self.dae.set_start(s.name(), ic[i])
-		if None == self.state_estimate:
+		# For SOME REASON this doesn't work.
+		#self.dae.set_start(self.dae.x[0], ic)
+
+		if self.state_estimate is None:
 			self.state_estimate = np.empty((self.n,self.N+1))
-			for i in range(self.n):
-				self.state_estimate[i,:] = ic[i]*np.ones(self.N+1)
+			#for i in range(self.n):
+			#	self.state_estimate[i,:] = ic[i]*np.ones(self.N+1)
+			self.state_estimate[2,:] = ic[2]*np.ones(self.N+1)
+			self.state_estimate[3,:] = ic[3]*np.ones(self.N+1)
+			for i in range(self.N+1):
+				self.state_estimate[0,i] = ic[0] + self.step*ic[2]*i
+				self.state_estimate[1,i] = ic[1] + self.step*ic[2]*i
 
 
 	def set_fixed_point(self, k:int, fixed_upper:np.array, fixed_lower:np.array)->None:
@@ -122,9 +127,9 @@ class KinematicBicycleCar(AbstractBaseCar):
 		if k in self.fixed_points.keys():
 			return self.fixed_points[k][0] # Recall upper is first, then lower
 		else:
-			return np.array([self.state_estimate[0,0] + self.step*np.sum(self.state_estimate[2,:k])+1,#20.0,
-                  			self.state_estimate[1,0] + np.sin((k+self.c)*np.pi/60)+1,#1.0,
-                  			20.0,
+			return np.array([np.inf,
+                  			np.inf,
+                  			50.0,
                   			np.pi/4,
 							])
 
@@ -132,8 +137,8 @@ class KinematicBicycleCar(AbstractBaseCar):
 		if k in self.fixed_points.keys():
 			return self.fixed_points[k][1] # Recall upper is first, then lower
 		else:
-			return np.array([self.state_estimate[0,0] + self.step*np.sum(self.state_estimate[2,:k])-1,#-1.0,
-                  			 self.state_estimate[1,0] + np.sin((k+self.c)*np.pi/60)-1,#-1.0,
+			return np.array([-np.inf,
+                  			 -np.inf,
                  			  0.0,
                  			 -np.pi/4,
                  			 ])
@@ -207,13 +212,6 @@ class KinematicBicycleCar(AbstractBaseCar):
 	def plot_with_time(self, x_executed:np.array, x_planned:np.array, boundary_up:np.array, boundary_low:np.array):
 		fig1, (ax1, ax2) = plt.subplots(2,1, figsize=(10,4), sharex=True)
 
-		# Plot the bounds around the executed steps
-		t = np.linspace(0, 0.05*(np.size(boundary_up)//2-1), np.size(boundary_up)//2)
-		ax1.plot(t, boundary_up[:,0], color='gray')
-		ax1.plot(t, boundary_low[:,0], color='gray')
-		ax2.plot(t, boundary_up[:,1], color='gray')
-		ax2.plot(t, boundary_low[:,1], color='gray')
-
 		# Plot the executed steps
 		t = np.linspace(0, 0.05*(np.size(x_executed)//self.n-1), np.size(x_executed)//self.n)
 		ax1.plot(t, x_executed[0,:], color='blue')
@@ -223,6 +221,13 @@ class KinematicBicycleCar(AbstractBaseCar):
 		t = t[-1] + np.linspace(0, 0.05*(np.size(x_planned)//self.n-1), np.size(x_planned)//self.n)
 		ax1.plot(t, x_planned[0,:], color='orange')
 		ax2.plot(t, x_planned[1,:], color='orange')
+
+		# Plot the bounds around the executed steps
+		t = np.linspace(0, 0.05*(np.size(boundary_up)//2-1), np.size(boundary_up)//2)
+		ax1.plot(t, boundary_up[:,0], color='gray')
+		ax1.plot(t, boundary_low[:,0], color='gray')
+		ax2.plot(t, boundary_up[:,1], color='gray')
+		ax2.plot(t, boundary_low[:,1], color='gray')
 
 		ax1.set(ylabel="x (m)")
 		ax2.set(ylabel="y (m)", xlabel="Time (s)")

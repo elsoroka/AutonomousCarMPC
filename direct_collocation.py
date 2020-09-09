@@ -34,22 +34,18 @@ import matplotlib.pyplot as plt
 class MpcProblem:
 
     def __init__(self, model, cost, # casadi symbolic objective
-                 lowerbounds_x, upperbounds_x, # callables
-                 lowerbounds_u, upperbounds_u, # callables
                  road_center, # callable
+                 bound_x, #callable
                  ): 
 
         self.model = model
         self.sys  = model.getDae()
         self.cost = cost
-        self.lowerbounds_x = lowerbounds_x
-        self.upperbounds_x = upperbounds_x
-        self.lowerbounds_u = lowerbounds_u
-        self.upperbounds_u = upperbounds_u
+        self.bound_x=bound_x # TEST
         self.road_center   = road_center
         
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
-        self.sim = ca.integrator('F', 'cvodes', params, {'t0':0, 'tf':model.step})
+        self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
 
         # Set up collocation (from direct_collocation example)
 
@@ -109,12 +105,15 @@ class MpcProblem:
         # For plotting x and u given w
         x_plot = []
         u_plot = []
+        self.p_plot = np.empty((self.model.N+1, self.model.n, 2))
 
         # "Lift" initial conditions
         Xk = ca.MX.sym('z0', self.model.n)
         w.append(Xk)
         lbw.append(self.ic)
         ubw.append(self.ic)
+        #lbw.append(-np.inf*(np.ones(4,)))
+        #ubw.append( np.inf*(np.ones(4,)))
         w0.append(self.ic)
         x_plot.append(Xk)
 
@@ -130,14 +129,17 @@ class MpcProblem:
                         [self.sys.ode[0], self.cost],
                         ['x', 'u'],['xdot', 'L'])
 
+        # for plotting
+        bounds, p = self.bound_x(self.model, 0)
+        self.p_plot[0,:,:] = p
 
         # Formulate the NLP
         for k in range(self.model.N):
             # New NLP variable for the control
             Uk = ca.MX.sym("U_"+str(k), self.model.m)
             w.append(Uk)
-            lbw.append(np.reshape(self.lowerbounds_u(self.model, k), (self.model.m,)))
-            ubw.append(np.reshape(self.upperbounds_u(self.model, k), (self.model.m,)))
+            lbw.append(np.reshape(self.model.lowerbounds_u(k), (self.model.m,)))
+            ubw.append(np.reshape(self.model.upperbounds_u(k), (self.model.m,)))
            # w0.append(np.zeros((self.model.m,)))
             w0.append(self.model.control_estimate[:,k])
             u_plot.append(Uk)
@@ -155,10 +157,18 @@ class MpcProblem:
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
-                lbw.append(np.reshape(self.lowerbounds_x(self.model, k), (self.model.n,)))
-                ubw.append(np.reshape(self.upperbounds_x(self.model, k), (self.model.n,)))
-                #w0.append(np.zeros((self.model.n,)))
-                w0.append(self.model.state_estimate[:,k])
+                lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
+                ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+                w0.append(self.model.state_estimate[:,k])                
+
+                # TEST
+                
+                bounds, p = self.bound_x(self.model,k)
+                for (ub, a, b, c, lb) in bounds:
+                    ubg.append(np.reshape(ub,(1,)))
+                    lbg.append(np.reshape(lb,(1,)))
+                    g.append(Xkj[0]*a + Xkj[1]*b + c)
+                
 
             # Loop over collocation points
             Xk_end = self._D[0]*Xk
@@ -182,16 +192,27 @@ class MpcProblem:
             # New NLP variable for state at end of interval
             Xk = ca.MX.sym('X_' + str(k+1), self.model.n)
             w.append(Xk)
-            lbw.append(np.reshape(self.lowerbounds_x(self.model, k+1), (self.model.n,)))
-            ubw.append(np.reshape(self.upperbounds_x(self.model, k+1), (self.model.n,)))
-            #w0.append(np.zeros((self.model.n, )))
+            lbw.append(np.reshape(self.model.lowerbounds_x(k+1), (self.model.n,)))
+            ubw.append(np.reshape(self.model.upperbounds_x(k+1), (self.model.n,)))
+    
             w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
+
+            self.attractive_cost += Xk[3]**2
+            
+            bounds, p = self.bound_x(self.model,k+1)
+                
+            for (ub, a, b, c, lb) in bounds:
+                ubg.append(np.reshape(ub,(1,)))
+                lbg.append(np.reshape(lb,(1,)))
+                g.append(Xk[0]*a + Xk[1]*b + c)
+                
 
             # Add equality constraint
             g.append(Xk_end-Xk)
             lbg.append(np.zeros((self.model.n,)))
             ubg.append(np.zeros((self.model.n,)))
+            
 
             # Weakly attract state to middle of road
             xy_k = self.road_center(self.model, k+1)
@@ -200,13 +221,15 @@ class MpcProblem:
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2)
             print("Attracting ", Xk[0], k+1, "to ", xy_k)
-
+            self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road
+        # Several papers make the steering change cost really big
         cost = 10.0*self.attractive_cost + \
                1.0*self.jerk_cost + \
-               10.0*180/np.pi*self.steering_change_cost
-               # Several papers make this really big
+               1.0*180/np.pi*self.steering_change_cost + \
+               J # belongs to direct_collocation
+            
 
 
         f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
@@ -222,11 +245,11 @@ class MpcProblem:
         w0 = np.concatenate(w0)
         lbw = np.concatenate(lbw)
         ubw = np.concatenate(ubw)
-        lbg = np.concatenate(lbg)
+        lbg = np.concatenate(lbg) # yikes
         ubg = np.concatenate(ubg)
 
         # Create an NLP solver
-        prob = {'f': J, 'x': w, 'g': g}
+        prob = {'f': cost, 'x': w, 'g': g}
         solver = ca.nlpsol('solver', 'ipopt', prob, {'verbose':False});
 
         # Function to get x and u trajectories from w
@@ -235,16 +258,14 @@ class MpcProblem:
         # Solve the NLP
         sol = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg)
         x_opt, u_opt = trajectories(sol['x'])
-        
         self.x_opt = x_opt.full() # to numpy array
         self.u_opt = u_opt.full() # to numpy array
 
         # Feed the previous stateback to the model
         self.model.set_state_estimate(self.x_opt)
         self.model.set_control_estimate(self.u_opt)
-        self.model.c += 1
 
-        return self.x_opt, self.u_opt
+        return self.x_opt, self.u_opt, sol
 
     def simulate(self, x:np.array, u:np.array):
       r = self.sim(x0=x, p=u)

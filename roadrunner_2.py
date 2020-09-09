@@ -84,7 +84,7 @@ class Roadrunner:
 		# Then we know how to fit the next curve.
 
 
-	def evaluate(self, offset_xy=0.0):
+	def evaluate(self, offset_xy=0.0, full_data=False):
 		'''Given an offset (in meters) from self.current_position,
 		evaluate the curve at that given point.
 		The offset may be negative.
@@ -114,6 +114,9 @@ class Roadrunner:
 		result = self.to_world_frame(np.reshape(result,(1,2)), \
 									 angle=seg.transform_angle,
 								     offset=seg.transform_offset)
+		if full_data:
+			result = (result, self.get_angle(), self.get_width())
+
 		# restore current state
 		if state is not None:
 			self.reset(**state)
@@ -141,10 +144,12 @@ class Roadrunner:
 				self.dist_traveled_xy += seg.curve.length*(seg.end_pct - self.current_pct)
 				# Increment the segment_ptr, so we now use a new curve (k+1)
 				self._segment_ptr += 1
-				seg = self.segments[self._segment_ptr]
+
 				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
 					print("WARNING: you have run out of road points!")
+					self._segment_ptr = 0 if self._segment_ptr < 0 else len(self.segments)-1
 
+				seg = self.segments[self._segment_ptr]
 				# Now we're at the beginning of the new curve
 				self.current_pct = seg.start_pct
 
@@ -155,10 +160,13 @@ class Roadrunner:
 
 				self.dist_traveled_xy += seg.curve.length*(self.current_pct - seg.start_pct)
 				self._segment_ptr -= 1
-				seg = self.segments[self._segment_ptr]
 
 				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
 					print("WARNING: you have run out of road points!")
+					self._segment_ptr = 0 if self._segment_ptr < 0 else len(self.segments)-1
+				
+				seg = self.segments[self._segment_ptr]
+
 				self.current_pct = seg.end_pct
 
 			step_pct *= -1 # reset sign so the remainder is correctly negative
@@ -181,7 +189,7 @@ class Roadrunner:
 		curve = self.segments[self._segment_ptr].curve
 		tangent_vector = curve.evaluate_hodograph(self.current_pct)
 		# Now we can get a precise angle
-		return np.arctan2(tangent_vector[1], tangent_vector[0])
+		return np.arctan2(tangent_vector[1], tangent_vector[0]) + self.segments[self._segment_ptr].transform_angle
 
 
 	def reset(self, segment_ptr=0, dist_traveled_xy=0.0, current_pct_offset=0.0)->None:
@@ -253,7 +261,7 @@ class Roadrunner:
 			# Recall these points are fit in the car body frame
 			xy = np.transpose(seg.curve.evaluate_multi(s))
 			# Transform back to world frame
-			xy = rr.to_world_frame(xy,seg.transform_angle, seg.transform_offset)
+			xy = self.to_world_frame(xy,seg.transform_angle, seg.transform_offset)
 			# Plot the points
 			ax.plot(xy[:,0], xy[:,1])
 
