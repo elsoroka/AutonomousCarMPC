@@ -28,19 +28,19 @@
 # using direct collocation to handle the dynamics
 
 import casadi as ca
-import numpy as np
+import numpy  as np
 import matplotlib.pyplot as plt
 
 class MpcProblem:
 
-    def __init__(self, model, cost, # casadi symbolic objective
+    def __init__(self, model, # casadi symbolic objective
                  road_center, # callable
                  bound_x, #callable
                  ): 
 
         self.model = model
         self.sys  = model.getDae()
-        self.cost = cost
+        self.cost = 0
         self.bound_x=bound_x # TEST
         self.road_center   = road_center
         
@@ -85,11 +85,6 @@ class MpcProblem:
             self._B[j] = pint(1.0)
 
 
-    # Update the cost function between iterations
-    def set_cost(self, cost):
-        self.cost = cost
-
-
     def run(self, ic:np.array):
         self.ic = np.reshape(ic, (self.model.n,))
         # Start with an empty NLP
@@ -112,8 +107,6 @@ class MpcProblem:
         w.append(Xk)
         lbw.append(self.ic)
         ubw.append(self.ic)
-        #lbw.append(-np.inf*(np.ones(4,)))
-        #ubw.append( np.inf*(np.ones(4,)))
         w0.append(self.ic)
         x_plot.append(Xk)
 
@@ -140,7 +133,7 @@ class MpcProblem:
             w.append(Uk)
             lbw.append(np.reshape(self.model.lowerbounds_u(k), (self.model.m,)))
             ubw.append(np.reshape(self.model.upperbounds_u(k), (self.model.m,)))
-           # w0.append(np.zeros((self.model.m,)))
+            # recall w0 is the guess of w, the decision variables
             w0.append(self.model.control_estimate[:,k])
             u_plot.append(Uk)
 
@@ -161,9 +154,9 @@ class MpcProblem:
                 ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
                 w0.append(self.model.state_estimate[:,k])                
 
-                # TEST
-                
+                # Add the polygonal bounds at step k                
                 bounds, p = self.bound_x(self.model,k)
+                
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
                     lbg.append(np.reshape(lb,(1,)))
@@ -198,8 +191,7 @@ class MpcProblem:
             w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
 
-            self.attractive_cost += Xk[3]**2
-            
+            # Add the polygonal bounds at step k+1
             bounds, p = self.bound_x(self.model,k+1)
                 
             for (ub, a, b, c, lb) in bounds:
@@ -215,8 +207,12 @@ class MpcProblem:
             
 
             # Weakly attract state to middle of road
+            # xy_k is (x,y,angle)
             xy_k = self.road_center(self.model, k+1)
 
+            # recall Xk[0] and Xk[1] are world frame x-y position
+            # Xk[2] is velocity, Xk[3] is angle in world frame
+            # we want to match the x-y position and road angle
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2)
@@ -228,7 +224,8 @@ class MpcProblem:
         cost = 10.0*self.attractive_cost + \
                1.0*self.jerk_cost + \
                1.0*180/np.pi*self.steering_change_cost + \
-               J # belongs to direct_collocation
+               0.0*J # belongs to direct_collocation, probably leftover
+               # from the example this code was built from
             
 
 
