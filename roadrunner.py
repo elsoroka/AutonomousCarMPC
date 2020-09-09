@@ -1,3 +1,7 @@
+#
+# DON'T USE THIS FILE, USE ROADRUNNER_2.py THIS FILE DOES NOT WORK.
+# 09/08/2020
+#
 # A class to handle feeding the road splines to the controller
 # File created: 08/08/2020
 # Emiko Soroka
@@ -12,9 +16,13 @@ class RoadSegment():
 	
 	Bound = namedtuple('Bound', ['slope', 'offset', 'side'])
 	
-	def __init__(self, road_center:np.array, road_width:np.array):
+	def __init__(self, road_center:np.array, road_width:np.array,
+		         start=0.4, end=0.6):
+		'''road_center: 2'''
 		self.road_center = road_center
 		self.road_width  = road_width
+		self.start       = start
+		self.end         = end
 
 		self.P, = np.shape(self.road_width)
 		assert (self.P,2) == np.shape(self.road_center)
@@ -46,7 +54,7 @@ class RoadSegment():
 	def check_bound(bound,p):
 		#print("Bound:\n", bound)
 		p = np.reshape(p,2)
-		#print("result: ", bound.slope*(p[0]-bound.offset[0]) + bound.offset[1])
+
 		# Catch the case where the bound has a vertical line?
 		if bound.side == ">" and np.sign(bound.slope) == 1 \
 		or bound.side == "<" and np.sign(bound.slope) == -1:
@@ -127,7 +135,9 @@ class Roadrunner():
 			step = seg.dist_traveled - seg.curve.length/self.P
 			self.segment_ptr += 1
 			#print("ptr is ", self.segment_ptr)
-
+			if self.segment_ptr == len(self.segments):
+				raise StopIteration
+				
 			seg = self.segments[self.segment_ptr]
 			seg.dist_traveled += step
 
@@ -137,10 +147,6 @@ class Roadrunner():
 		# s can be float or np.array or if none, evaluate at current point
 		pts = None
 
-		#if type(s) == float:
-		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate(s)
-		#else:
-		#	pts = 0.9*self.segments[self.segment_ptr].curve.evaluate_multi(s)
 		if s is None:
 			s = float(self.segments[self.segment_ptr].dist_traveled/self.segments[self.segment_ptr].curve.length)
 		# test
