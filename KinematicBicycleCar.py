@@ -115,7 +115,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		self.control_estimate[:,:-1] = control_estimate[:,1:]
 		# The last one, we don't know. So we guess it's
 		# the second-to-last one.
-		self.control_estimate[:,-1] = self.control_estimate[:,-2]
+		self.control_estimate[:,-1] = np.zeros((self.m,)) #self.control_estimate[:,-2]
 	
 	
 	# CONSTRAINT HANDLERS
@@ -130,7 +130,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 			return np.array([np.inf,
                   			np.inf,
                   			50.0,
-                  			np.pi/4,
+                  			2*np.pi,
 							])
 
 	def lowerbounds_x(self, k:int)->np.array:
@@ -140,7 +140,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 			return np.array([-np.inf,
                   			 -np.inf,
                  			  0.0,
-                 			 -np.pi/4,
+                 			 -2*np.pi,
                  			 ])
 
 
