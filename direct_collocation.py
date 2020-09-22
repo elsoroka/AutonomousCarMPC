@@ -23,7 +23,7 @@
 #
 
 
-# File MODIFIED from example direct_collocation.py provided with CasADi
+# File MODIFIED from example direct_collocation.pTd with CasADi
 # to manage an MPC problem using a CasADI dynamics model and symbolic cost
 # using direct collocation to handle the dynamics
 
@@ -156,7 +156,7 @@ class MpcProblem:
 
                 # Add the polygonal bounds at step k                
                 bounds, p = self.bound_x(self.model,k)
-                
+
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
                     lbg.append(np.reshape(lb,(1,)))
@@ -216,7 +216,6 @@ class MpcProblem:
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2)
-            print("Attracting ", Xk[0], k+1, "to ", xy_k)
             self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road
@@ -224,7 +223,7 @@ class MpcProblem:
         cost = 10.0*self.attractive_cost + \
                1.0*self.jerk_cost + \
                1.0*180/np.pi*self.steering_change_cost + \
-               0.0*J # belongs to direct_collocation, probably leftover
+               1.0*J # belongs to direct_collocation, probably leftover
                # from the example this code was built from
             
 

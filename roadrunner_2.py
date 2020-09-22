@@ -88,8 +88,8 @@ class Roadrunner:
 			start_xy = self.to_body_frame(np.reshape(self.road_center[i+start_idx],(1,2)), angle, offset)
 			end_xy   = self.to_body_frame(np.reshape(self.road_center[i+end_idx],  (1,2)),   angle, offset)
 
-			start_pct,_ = Roadrunner.find_closest_pt(curve, np.reshape(start_xy,(2,1)))
-			end_pct,_   = Roadrunner.find_closest_pt(curve, np.reshape(end_xy,  (2,1)))
+			start_pct,_ = Roadrunner.find_closest_pt(curve, np.reshape(start_xy,(2,1)), runs=4, start=0,end=0.5)
+			end_pct,_   = Roadrunner.find_closest_pt(curve, np.reshape(end_xy,  (2,1)), runs=4, start=0.5,end=1)
 			self.segments.append(Segment(curve     = curve,
 										 start_pct = start_pct,
 										 end_pct   = end_pct,
@@ -207,6 +207,18 @@ class Roadrunner:
 		#print("Advanced to", self.current_pct)
 		# Done!
 
+
+	def advance_s(self, delta_s)->float:
+		'''Advance by a distance-along-the-curve s,
+		not an x-y distance.'''
+		seg = self.segments[self._segment_ptr]
+		if self.current_pct + delta_s > seg.end_pct:
+			delta_xy = (seg.end_pct - self.current_pct)*seg.curve.length + \
+			(delta_s - (seg.end_pct - self.current_pct))*self.segments[self._segment_ptr+1].curve.length
+		else:
+			delta_xy = delta_s*seg.curve.length
+		self.advance(delta_xy)
+		return delta_xy
 		
 	def get_width(self)->float:
 		# TODO: Fix. This is broken, there are fewer segments
@@ -243,15 +255,15 @@ class Roadrunner:
 		min_dist = np.inf
 		min_idx = 0
 		for idx, x_i in enumerate(x):
-
-			dist = np.linalg.norm(curve.evaluate(x_i) - match_pt,2)
+			xy = curve.evaluate(x_i)
+			dist = np.sqrt((xy[0]-match_pt[0])**2 + (xy[1]-match_pt[1])**2)
 			if dist < min_dist:
 				min_dist = dist
 				min_idx = idx
 		return min_idx, dist
 
 	@staticmethod
-	def find_closest_pt(curve, match_pt:np.array, runs=3)->(float, float):
+	def find_closest_pt(curve, match_pt:np.array, runs=3, start=0.0, end=1.0)->(float, float):
 		'''Given an xy point match_pt, find the closest point on the curve B.
 		Returns the corresponding s for the curve B(s) and the distance
 		between match_pt and B(s) (which can be 0 if match_pt is on B).
@@ -261,21 +273,23 @@ class Roadrunner:
 		min_s, dist = curve.locate(match_pt), 0.0
 		if min_s is None: # otherwise it's None
 
-			start = 0.0; end = 1.0; # start by searching the whole interval
 			x = None
 			for r in range(runs):
 				x = np.linspace(start,end,10)
 				min_idx,dist = Roadrunner._find_closest_in_x_to_pt(curve, x, match_pt)
 				min_s = x[min_idx]
 
-				start = np.max([0.0, x[min_idx]-1/(10*(r+1))])
-				end = np.min([1.0, x[min_idx]+1/(10*(r+1))])
+				# Here, we adjust the interval to search in
+				# by making it 1/2 the size of the previous interval
+				# and centered on the best point we found.
+				start = np.max([0.0, x[min_idx]-0.25*(end-start)])
+				end = np.min([1.0, x[min_idx]+0.25*(end-start)])
 
 			# Check: if this closest point is "too far"
 			if dist > 2.5:
 				print("find_closest_pt may be unreliable: closest match found for {} is {} away at s = {}, B(s) = {}".format(match_pt, dist, min_s, curve.evaluate(min_s)))
 
-			return min_s, dist
+		return min_s, dist
 
 
 	# PLOTTING
