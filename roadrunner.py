@@ -1,6 +1,6 @@
 #
 # DON'T USE THIS FILE, USE ROADRUNNER_2.py THIS FILE DOES NOT WORK.
-# 09/08/2020
+# 09/08/
 #
 # A class to handle feeding the road splines to the controller
 # File created: 08/08/2020

@@ -72,19 +72,23 @@ class KinematicBicycleCar(AbstractBaseCar):
 		return self.dae
 
 	# Specify initial conditions
-	def set_initial(self, ic:[]):
+	def set_initial(self, DESIRED_SPEED, roadrunner):
 		# For SOME REASON this doesn't work.
 		#self.dae.set_start(self.dae.x[0], ic)
+		state = roadrunner.save_state()
+		self.DESIRED_SPEED = DESIRED_SPEED
 
 		if self.state_estimate is None:
 			self.state_estimate = np.empty((self.n,self.N+1))
-			#for i in range(self.n):
-			#	self.state_estimate[i,:] = ic[i]*np.ones(self.N+1)
-			self.state_estimate[2,:] = ic[2]*np.ones(self.N+1)
-			self.state_estimate[3,:] = ic[3]*np.ones(self.N+1)
-			for i in range(self.N+1):
-				self.state_estimate[0,i] = ic[0] + self.step*ic[2]*i
-				self.state_estimate[1,i] = ic[1] + self.step*ic[2]*i
+			for i in range(self.N):
+				(xy, psi, _) = roadrunner.evaluate(full_data=True)
+				# x,y
+				self.state_estimate[0:2,i] = xy
+				self.state_estimate[2,i]   = self.DESIRED_SPEED
+				self.state_estimate[3]     = psi
+				roadrunner.advance(self.DESIRED_SPEED*self.step)
+
+		roadrunner.reset(**state)
 
 
 	def set_fixed_point(self, k:int, fixed_upper:np.array, fixed_lower:np.array)->None:
@@ -130,7 +134,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 			return np.array([np.inf,
                   			np.inf,
                   			50.0,
-                  			2*np.pi,
+                  			np.pi,
 							])
 
 	def lowerbounds_x(self, k:int)->np.array:
@@ -140,7 +144,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 			return np.array([-np.inf,
                   			 -np.inf,
                  			  0.0,
-                 			 -2*np.pi,
+                 			 -np.pi,
                  			 ])
 
 

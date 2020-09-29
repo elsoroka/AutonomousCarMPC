@@ -23,7 +23,7 @@
 #
 
 
-# File MODIFIED from example direct_collocation.pTd with CasADi
+# File MODIFIED from example direct_collocation.py
 # to manage an MPC problem using a CasADI dynamics model and symbolic cost
 # using direct collocation to handle the dynamics
 
@@ -44,6 +44,8 @@ class MpcProblem:
         self.bound_x=bound_x # TEST
         self.road_center   = road_center
         
+        # hack
+
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
         self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
 
@@ -210,19 +212,22 @@ class MpcProblem:
             # xy_k is (x,y,angle)
             xy_k = self.road_center(self.model, k+1)
 
+            #w0.append(np.concatenate([xy_k[0:2], [self.model.DESIRED_SPEED, xy_k[2]],]))
+
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
             # we want to match the x-y position and road angle
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
-                                     (Xk[3]-xy_k[2])**2)
+                                     (Xk[3]-xy_k[2])**2 + \
+                                     (Xk[2] - self.model.DESIRED_SPEED)**2)
             self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
-        cost = 10.0*self.attractive_cost + \
-               1.0*self.jerk_cost + \
-               1.0*180/np.pi*self.steering_change_cost + \
+        cost = 1.0*self.attractive_cost + \
+               10.0*self.jerk_cost + \
+               10.0*180/np.pi*self.steering_change_cost + \
                1.0*J # belongs to direct_collocation, probably leftover
                # from the example this code was built from
             
@@ -261,7 +266,7 @@ class MpcProblem:
         self.model.set_state_estimate(self.x_opt)
         self.model.set_control_estimate(self.u_opt)
 
-        return self.x_opt, self.u_opt, sol
+        return self.x_opt, self.u_opt, solver.stats()
 
     def simulate(self, x:np.array, u:np.array):
       r = self.sim(x0=x, p=u)
