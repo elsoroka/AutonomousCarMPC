@@ -162,7 +162,10 @@ class MpcProblem:
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
                     lbg.append(np.reshape(lb,(1,)))
-                    g.append(Xkj[0]*a + Xkj[1]*b + c)
+                    if a != 0:
+                        g.append(Xkj[0]*a + Xkj[1]*b + c)
+                    else:
+                        g.append(Xkj[1]*b + c)
                 
 
             # Loop over collocation points
