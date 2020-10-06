@@ -37,6 +37,8 @@ from   collections       import namedtuple
 # the x-y results of curve.evaluate() from body frame to world frame.
 Segment = namedtuple('Segment', ['curve', 'start_pct', 'end_pct', 'transform_angle', 'transform_offset'])
 
+class OutOfRoadPointsException(Exception):
+	pass
 
 class Roadrunner:
 
@@ -163,10 +165,8 @@ class Roadrunner:
 				# Increment the segment_ptr, so we now use a new curve (k+1)
 				self._segment_ptr += 1
 
-				# TODO: better handling of this problem, throw an exception?
 				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
-					print("WARNING: you have run out of road points!")
-					self._segment_ptr = 0 if self._segment_ptr < 0 else len(self.segments)-1
+					raise OutOfRoadPointsException("Ran out of road points (looking forward)!")
 
 
 				# Advance to the next curve:
@@ -188,8 +188,7 @@ class Roadrunner:
 				self._segment_ptr -= 1
 
 				if self._segment_ptr < 0 or self._segment_ptr >= len(self.segments):
-					print("WARNING: you have run out of road points!")
-					self._segment_ptr = 0 if self._segment_ptr < 0 else len(self.segments)-1
+					raise OutOfRoadPointsException("Ran out of road points (looking backward)!")
 				
 
 				# Advance to the next curve
