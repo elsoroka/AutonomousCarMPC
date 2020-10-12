@@ -314,11 +314,11 @@ class Roadrunner:
 	    
 	    eps = np.finfo(np.float64).eps # Machine Precision
 	    
-	    dist_behind = (k-5)*step*desired_speed(k) # 5 steps behind * timestep * velocity at point k
+	    dist_behind = (k-10)*step*desired_speed(k) # 5 steps behind * timestep * velocity at point k
 	    #print("Looking behind by", dist_behind)
 	    (center_minus, angle_minus, width_minus) = self.evaluate(dist_behind, full_data=True)
 	    
-	    dist_ahead = (k+5)*step*desired_speed(k) # 5 steps ahead * timestep * velocity at point k
+	    dist_ahead = (k+10)*step*desired_speed(k) # 5 steps ahead * timestep * velocity at point k
 	    #print("Looking ahead by", dist_ahead)
 	    (center_plus, angle_plus, width_plus) = self.evaluate(dist_ahead, full_data=True)
 

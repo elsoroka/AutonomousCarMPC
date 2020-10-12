@@ -1,3 +1,4 @@
+# Original notes from direct_collocation.py example:
 #
 #     This file is part of CasADi.
 #
@@ -24,7 +25,7 @@
 
 
 # File MODIFIED from example direct_collocation.py
-# to manage an MPC problem using a CasADI dynamics model and symbolic cost
+# to manage an MPC problem using a CasADi dynamics model and symbolic cost
 # using direct collocation to handle the dynamics
 
 import casadi as ca
@@ -39,7 +40,8 @@ class MpcProblem:
         self.roadrunner = roadrunner
         self.sys  = model.getDae()
         self.cost = 0
-        
+        self.Uk_prev = None
+
         # hack
 
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
@@ -111,7 +113,6 @@ class MpcProblem:
         self.attractive_cost = 0.0
         self.jerk_cost = 0.0
         self.steering_change_cost = 0.0
-        self.Uk_prev = None
 
         # Create a matrix function
         # HACK: breaks if multiple state variables instead of one vector state
@@ -211,8 +212,6 @@ class MpcProblem:
             # xy_k is (x,y,angle)
             xy_k = self.roadrunner.center(self.model.step, k+1, self.model.desired_speed)
 
-            #w0.append(np.concatenate([xy_k[0:2], [self.model.DESIRED_SPEED, xy_k[2]],]))
-
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
             # we want to match the x-y position and road angle
@@ -225,8 +224,8 @@ class MpcProblem:
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
         cost = 1.0*self.attractive_cost + \
-               10.0*self.jerk_cost + \
-               10.0*180/np.pi*self.steering_change_cost + \
+               100.0*self.jerk_cost + \
+               100.0*180/np.pi*self.steering_change_cost + \
                1.0*J # belongs to direct_collocation, probably leftover
                # from the example this code was built from
             
@@ -264,6 +263,10 @@ class MpcProblem:
         # Feed the previous stateback to the model
         self.model.set_state_estimate(self.x_opt)
         self.model.set_control_estimate(self.u_opt)
+        # This ensures the control does not change drastically from the previous
+        # (already-executed) control
+        print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])
+        self.Uk_prev = [self.u_opt[0,0], self.u_opt[1,0]]
 
         return self.x_opt, self.u_opt, solver.stats()
 
