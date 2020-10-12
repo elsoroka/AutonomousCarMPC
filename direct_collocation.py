@@ -33,16 +33,12 @@ import matplotlib.pyplot as plt
 
 class MpcProblem:
 
-    def __init__(self, model, # casadi symbolic objective
-                 road_center, # callable
-                 bound_x, #callable
-                 ): 
+    def __init__(self, model, roadrunner): # casadi symbolic objective
 
         self.model = model
+        self.roadrunner = roadrunner
         self.sys  = model.getDae()
         self.cost = 0
-        self.bound_x=bound_x # TEST
-        self.road_center   = road_center
         
         # hack
 
@@ -125,7 +121,7 @@ class MpcProblem:
                         ['x', 'u'],['xdot', 'L'])
 
         # for plotting
-        bounds, p = self.bound_x(self.model, 0)
+        bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
         self.p_plot[0,:,:] = p
 
         # Formulate the NLP
@@ -157,7 +153,7 @@ class MpcProblem:
                 w0.append(self.model.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
-                bounds, p = self.bound_x(self.model,k)
+                bounds, p = self.roadrunner.bound_x(self.model.step,k, self.model.desired_speed)
 
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
@@ -197,7 +193,7 @@ class MpcProblem:
             x_plot.append(Xk)
 
             # Add the polygonal bounds at step k+1
-            bounds, p = self.bound_x(self.model,k+1)
+            bounds, p = self.roadrunner.bound_x(self.model.step,k+1, self.model.desired_speed)
                 
             for (ub, a, b, c, lb) in bounds:
                 ubg.append(np.reshape(ub,(1,)))
@@ -213,7 +209,7 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
-            xy_k = self.road_center(self.model, k+1)
+            xy_k = self.roadrunner.center(self.model.step, k+1, self.model.desired_speed)
 
             #w0.append(np.concatenate([xy_k[0:2], [self.model.DESIRED_SPEED, xy_k[2]],]))
 
@@ -223,7 +219,7 @@ class MpcProblem:
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2 + \
-                                     (Xk[2] - self.model.DESIRED_SPEED)**2)
+                                     (Xk[2] - self.model.desired_speed(k))**2)
             self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road

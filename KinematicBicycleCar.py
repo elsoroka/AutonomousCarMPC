@@ -76,7 +76,9 @@ class KinematicBicycleCar(AbstractBaseCar):
 		# For SOME REASON this doesn't work.
 		#self.dae.set_start(self.dae.x[0], ic)
 		state = roadrunner.save_state()
-		self.DESIRED_SPEED = DESIRED_SPEED
+		def desired_speed(k:int): # TODO: HACK. FIX
+			return DESIRED_SPEED
+		self.desired_speed = desired_speed
 
 		if self.state_estimate is None:
 			self.state_estimate = np.empty((self.n,self.N+1))
@@ -84,9 +86,9 @@ class KinematicBicycleCar(AbstractBaseCar):
 				(xy, psi, _) = roadrunner.evaluate(full_data=True)
 				# x,y
 				self.state_estimate[0:2,i] = xy
-				self.state_estimate[2,i]   = self.DESIRED_SPEED
+				self.state_estimate[2,i]   = self.desired_speed(i)
 				self.state_estimate[3]     = psi
-				roadrunner.advance(self.DESIRED_SPEED*self.step)
+				roadrunner.advance(self.desired_speed(i)*self.step)
 
 		roadrunner.reset(**state)
 

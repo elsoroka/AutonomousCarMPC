@@ -291,6 +291,103 @@ class Roadrunner:
 		return min_s, dist
 
 
+
+
+	def center(self, step, k:int, desired_speed:callable)->np.array:
+
+	    (xy, angle, _) = self.evaluate(step*np.sum([desired_speed(i) for i in range(k)]), full_data=True)
+
+	    center = np.empty((3,))
+	    center[0:2] = np.reshape(xy, 2)
+	    center[2]   = angle
+	    return center
+
+	# Test
+
+	def bound_x(self, step, k:int, desired_speed:callable)->[np.array]:
+	    # Returns a 4-sided polygon bound, like this:
+	    # x2-------x3
+	    #   \  o  /
+	    #  x1-----x4
+	    # successive bounds will overlap each other
+	    # so there is freedom to slow down or speed up the vehicle.
+	    
+	    eps = np.finfo(np.float64).eps # Machine Precision
+	    
+	    dist_behind = (k-5)*step*desired_speed(k) # 5 steps behind * timestep * velocity at point k
+	    #print("Looking behind by", dist_behind)
+	    (center_minus, angle_minus, width_minus) = self.evaluate(dist_behind, full_data=True)
+	    
+	    dist_ahead = (k+5)*step*desired_speed(k) # 5 steps ahead * timestep * velocity at point k
+	    #print("Looking ahead by", dist_ahead)
+	    (center_plus, angle_plus, width_plus) = self.evaluate(dist_ahead, full_data=True)
+
+	    center_minus = np.reshape(center_minus,(2,))
+	    center_plus = np.reshape(center_plus,(2,))
+	    
+	    # we either have 0.0 >= ax + by + c >= -Inf
+	    # or             Inf >= ax + by + c >= 0.0
+	    
+	    # since y = (x-x0)*slope + y0
+	    # use the line 0 = x*slope - y + y0 - x0*slope as the upper / lower bound
+	    
+	    #            (upper)
+	    #     p2-----slope23------p3
+	    #    /                    /
+	    # slope12 (upper)   slope34 (lower)
+	    #  /                   /
+	    # p1-----slope14-----p4
+	    #        (lower)
+	    
+	    p1 = np.reshape(np.array([center_minus[0] + width_minus/2.0*np.cos(angle_minus-np.pi/2),
+	                   center_minus[1] + width_minus/2.0*np.sin(angle_minus-np.pi/2)]), (2,))
+	    
+	    p2 = np.reshape(np.array([center_minus[0] + width_minus/2.0*np.cos(angle_minus+np.pi/2),
+	                   center_minus[1] + width_minus/2.0*np.sin(angle_minus+np.pi/2)]), (2,))
+	    
+	    p3 = np.reshape(np.array([center_plus[0] + width_plus/2.0*np.cos(angle_plus+np.pi/2),
+	                   center_plus[1] + width_plus/2.0*np.sin(angle_plus+np.pi/2)]), (2,))
+	    
+	    p4 = np.reshape(np.array([center_plus[0] + width_plus/2.0*np.cos(angle_plus-np.pi/2),
+	                   center_plus[1] + width_plus/2.0*np.sin(angle_plus-np.pi/2)]), (2,))
+	    
+	    # This point is approximately the center of the bound
+	    # It should definitely be a feasible point
+	    center_x, center_y = 0.5*(center_minus + center_plus)
+	    
+	    
+	    # The slopes between the points
+	    slope12 = (p2[1]-p1[1])/(p2[0]-p1[0]); slope12 = 1e4 if np.isnan(slope12) else slope12
+	    slope23 = (p3[1]-p2[1])/(p3[0]-p2[0]); slope23 = 1e4 if np.isnan(slope23) else slope23
+	    slope43 = (p3[1]-p4[1])/(p3[0]-p4[0]); slope43 = 1e4 if np.isnan(slope43) else slope43
+	    slope14 = (p1[1]-p4[1])/(p1[0]-p4[0]); slope14 = 1e4 if np.isnan(slope14) else slope14
+	    
+	    slopes = [(slope12, p1, p2), (slope23, p2, p3), (slope43, p4, p3), (slope14, p4, p1)]
+	    
+	    bounds = []
+	    for (slope, p, q) in slopes:
+	        offset = p[1]-p[0]*slope
+	        
+	        # We determine whether it is an upper or lower bound
+	        # by making sure center x,y is a feasible point
+	        
+	        if 0.0 <= center_x*slope + center_y*(-1.0) + offset and \
+	                  center_x*slope + center_y*(-1.0) + offset <= np.inf:
+	            bounds.append(np.array([np.inf, slope, -1.0, offset, 0.0]))
+	            
+	        elif -np.inf <= center_x*slope + center_y*(-1.0) + offset and \
+	                        center_x*slope + center_y*(-1.0) + offset <= 0.0:
+	            bounds.append(np.array([0.0, slope, -1.0, offset, -np.inf]))
+	        else:
+	            raise ValueError("HUGE ERROR at ", k, "a, b, c =", slope, -1.0, offset, "\ncenter", center_x, center_y)
+	    
+
+	    return bounds, np.vstack([p1,p2,p3,p4])
+
+
+
+
+
 	# PLOTTING
 	def plot(self, ax=None, n_points=10):
 		'''If given ax, draw on ax, else make a new plot.
