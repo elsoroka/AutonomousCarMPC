@@ -164,15 +164,15 @@ class KinematicBicycleCar(AbstractBaseCar):
 			gridspec_kw={'wspace': 0.5})
 
 		# Plot the given data
-		tgrid = np.linspace(0, self.T, len(u_executed[0]))
-		ax1.step(tgrid, u_executed[0],           label="(executed)")
-		ax2.step(tgrid, 180/np.pi*u_executed[1], label="(executed)")
-
-		# Plot the last optimal path computed
-		tgrid = np.linspace(tgrid[-1], tgrid[-1]+self.T, self.N)
-		ax1.step(tgrid, u_planned[0], '--',           label="(planned)")
-		ax2.step(tgrid, 180/np.pi*u_planned[1], '--', label="(planned)")
-
+		tgrid = np.linspace(0, self.step*len(u_executed[0]), len(u_executed[0]))
+	    ax1.step(tgrid, u_executed[0],           label="(executed)")
+	    ax2.step(tgrid, 180/np.pi*u_executed[1], label="(executed)")
+	    
+	    # Plot the last optimal path computed
+	    tgrid = np.linspace(tgrid[-1] , tgrid[-1] + self.T, self.N)
+	    ax1.step(tgrid, u_planned[0], '--',           label="(planned)")
+	    ax2.step(tgrid, 180/np.pi*u_planned[1], '--', label="(planned)")
+    
 		# Fix the legend and labels
 		ax2.legend(bbox_to_anchor=(1.05, 1),
 				   loc='upper left',
