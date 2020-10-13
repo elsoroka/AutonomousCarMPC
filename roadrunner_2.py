@@ -35,7 +35,7 @@ from   collections       import namedtuple
 # a start_pct and end_pct (governs when to start and stop using this curve)
 # and the x-y point and angle that transform
 # the x-y results of curve.evaluate() from body frame to world frame.
-Segment = namedtuple('Segment', ['curve', 'start_pct', 'end_pct', 'transform_angle', 'transform_offset'])
+Segment = namedtuple('Segment', ['curve', 'width', 'start_pct', 'end_pct', 'transform_angle', 'transform_offset'])
 
 class OutOfRoadPointsException(Exception):
 	pass
@@ -61,6 +61,7 @@ class Roadrunner:
 		
 		# Fit segments to the road points
 		self.segments = []
+		self.widths   = []
 		i = 0
 		# so if P = 20 and end_pct = 60%, we get 12.
 		end_idx   = int(P*self.end_pct)
@@ -76,10 +77,19 @@ class Roadrunner:
 			#angle = self.angles[i]
 			offset = self.road_center[i]
 			# Now transform the points and fit a curve to them.
+			road_body_frame = self.to_body_frame(road_center[i:i+P], angle)
 			curve  = bezier.Curve.from_nodes(np.asfortranarray( \
-					 	np.transpose(self.to_body_frame(road_center[i:i+P], angle))
+					 	np.transpose(road_body_frame)
 			         ))
+			distances = np.empty(P)
+			for j in range(P):
+				tmp = Roadrunner.find_closest_pt(curve, np.reshape(road_body_frame[j],(2,1)), runs=4, start=0,end=1)
+				distances[j] = tmp[0]
 
+			curve_width = bezier.Curve.from_nodes(np.asfortranarray( \
+					np.vstack([distances, road_width[i:i+P]])
+				))
+			
 			# Now we have a start_pct and end_pct (default: 0.3 to 0.7)
 			# but not all the curves will overlap perfectly
 			# so we can refine it a bit
@@ -93,6 +103,7 @@ class Roadrunner:
 			start_pct,_ = Roadrunner.find_closest_pt(curve, np.reshape(start_xy,(2,1)), runs=4, start=0,end=0.5)
 			end_pct,_   = Roadrunner.find_closest_pt(curve, np.reshape(end_xy,  (2,1)), runs=4, start=0.5,end=1)
 			self.segments.append(Segment(curve     = curve,
+										 width     = curve_width,
 										 start_pct = start_pct,
 										 end_pct   = end_pct,
 										 transform_angle  = angle,
@@ -218,13 +229,27 @@ class Roadrunner:
 			delta_xy = delta_s*seg.curve.length
 		self.advance(delta_xy)
 		return delta_xy
+
+	def advance_xy(self, xy)->float:
+		'''Advance to a "close by" x-y point by finding the closest point
+		to xy on the curve.'''
+		seg = self.segments[self._segment_ptr]
+		pt = np.asfortranarray(
+			self.to_body_frame(np.reshape(xy,(1,2)), seg.transform_angle, seg.transform_offset))
+
+		(s_new,_) = self.find_closest_pt(seg.curve,
+										 np.reshape(pt,(2,1)),
+										 start=self.current_pct,
+										 end=self.current_pct + 0.2)
+		# Advance to s_new, the closest point on the curve.
+		delta_s = s_new - self.current_pct
+		step_xy = self.advance_s(delta_s)
+		return step_xy
+
 		
 	def get_width(self)->float:
-		# TODO: Fix. This is broken, there are fewer segments
-		# than there are road points.
-		# it has been de-prioritized since we're using constant width
-		# roads to test.
-		return self.road_width[self._segment_ptr]
+		return self.segments[self._segment_ptr].width.evaluate(self.current_pct)[1]
+		
 	
 	def get_angle(self)->float:
 		# Evaluate the tangent vector to the curve at our current point
@@ -317,7 +342,6 @@ class Roadrunner:
 	    dist_behind = (k-10)*step*desired_speed(k) # 5 steps behind * timestep * velocity at point k
 	    #print("Looking behind by", dist_behind)
 	    (center_minus, angle_minus, width_minus) = self.evaluate(dist_behind, full_data=True)
-	    
 	    dist_ahead = (k+10)*step*desired_speed(k) # 5 steps ahead * timestep * velocity at point k
 	    #print("Looking ahead by", dist_ahead)
 	    (center_plus, angle_plus, width_plus) = self.evaluate(dist_ahead, full_data=True)
