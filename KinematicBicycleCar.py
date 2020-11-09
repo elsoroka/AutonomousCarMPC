@@ -72,12 +72,10 @@ class KinematicBicycleCar(AbstractBaseCar):
 		return self.dae
 
 	# Specify initial conditions
-	def set_initial(self, DESIRED_SPEED, roadrunner):
+	def set_initial(self, desired_speed:callable, roadrunner):
 		# For SOME REASON this doesn't work.
 		#self.dae.set_start(self.dae.x[0], ic)
 		state = roadrunner.save_state()
-		def desired_speed(k:int): # TODO: HACK. FIX
-			return DESIRED_SPEED
 		self.desired_speed = desired_speed
 
 		if self.state_estimate is None:
@@ -89,6 +87,9 @@ class KinematicBicycleCar(AbstractBaseCar):
 				self.state_estimate[2,i]   = self.desired_speed(i)
 				self.state_estimate[3]     = psi
 				roadrunner.advance(self.desired_speed(i)*self.step)
+
+				# Very bad rough estimate of acceleration
+				self.control_estimate[0,i] = (self.desired_speed(i+1) - self.desired_speed(i))/(2*self.step)
 
 		roadrunner.reset(**state)
 
@@ -120,7 +121,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		# so we take the control at time k+1 for our new time k
 		self.control_estimate[:,:-1] = control_estimate[:,1:]
 		# The last one, we don't know. So we guess it's
-		# the second-to-last one.
+		# zero?
 		self.control_estimate[:,-1] = np.zeros((self.m,)) #self.control_estimate[:,-2]
 	
 	
@@ -190,21 +191,21 @@ class KinematicBicycleCar(AbstractBaseCar):
 
 		# Plot the last optimal path computed
 		tgrid = np.linspace(0, self.T, self.N)
-		vx = np.multiply(x_planned[2],np.cos(x_planned[3]))
-		vy = np.multiply(x_planned[2],np.sin(x_planned[3]))
-		q = ax.quiver(x_planned[0], x_planned[1], vx, vy,
-					  color='orange', linewidth=0.5,)
-		ax.quiverkey(q, X=0.25, Y=0.2, U=5,
-					 label='Planned', labelpos='E')
+#		vx = np.multiply(x_planned[2],np.cos(x_planned[3]))
+#		vy = np.multiply(x_planned[2],np.sin(x_planned[3]))
+#		q = ax.quiver(x_planned[0], x_planned[1], vx, vy,
+#					  color='orange', linewidth=0.5,)
+	#	ax.quiverkey(q, X=0.25, Y=0.2, U=5,
+#					 label='Planned', labelpos='E')
 
 		# Plot the x given
 		tgrid = np.linspace(0, self.T, len(x_executed[0]))
-		vx = np.multiply(x_executed[2],np.cos(x_executed[3]))
-		vy = np.multiply(x_executed[2],np.sin(x_executed[3]))
-		q = ax.quiver(x_executed[0], x_executed[1], vx, vy,
-					  color='blue', linewidth=0.5,)
-		ax.quiverkey(q, X=0.25, Y=0.1, U=5,
-					 label='Velocity', labelpos='E')
+#		vx = np.multiply(x_executed[2],np.cos(x_executed[3]))
+#		vy = np.multiply(x_executed[2],np.sin(x_executed[3]))
+		#q = ax.quiver(x_executed[0], x_executed[1], vx, vy,
+	#				  color='blue', linewidth=0.5,)
+		#ax.quiverkey(q, X=0.25, Y=0.1, U=5,
+		#			 label='Velocity', labelpos='E')
 
 		# Plot position dots over the arrows. It looks better.
 		ax.scatter(x_executed[0], x_executed[1], color='navy')
