@@ -45,13 +45,14 @@ class MpcProblem:
         # Degree of interpolating polynomial for direct collocation
         self._d = 3
 
-
+        # Set up the simulation model
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
         self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
 
 
     def make_direct_collocation(self, t_f):
-        # Set up collocation (from direct_collocation example)
+        # http://casadi.sourceforge.net/v1.9.0/users_guide/html/node7.html
+        # Set up collocation (from direct_collocation example in casadi examples)
 
         # Get collocation points
         tau_root = np.append(0, ca.collocation_points(self._d, 'legendre'))
@@ -74,7 +75,7 @@ class MpcProblem:
                     p *= np.poly1d([1, -tau_root[r]]) / (tau_root[j]-tau_root[r])
 
             # Evaluate the polynomial at the final time to get the coefficients of the continuity equation
-            self._D[j] = p(t_f)
+            self._D[j] = p(1.0)
 
             # Evaluate the time derivative of the polynomial at all collocation points to get the coefficients of the continuity equation
             pder = np.polyder(p)
@@ -83,7 +84,7 @@ class MpcProblem:
 
             # Evaluate the integral of the polynomial to get the coefficients of the quadrature function
             pint = np.polyint(p)
-            self._B[j] = pint(t_f)
+            self._B[j] = pint(1.0)
 
 
     def run(self, ic:np.array):
