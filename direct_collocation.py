@@ -42,15 +42,16 @@ class MpcProblem:
         self.cost = 0
         self.Uk_prev = None
 
-        # hack
+        # Degree of interpolating polynomial for direct collocation
+        self._d = 3
+
 
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
         self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
 
-        # Set up collocation (from direct_collocation example)
 
-        # Degree of interpolating polynomial
-        self._d = 3
+    def make_direct_collocation(self, t_f):
+        # Set up collocation (from direct_collocation example)
 
         # Get collocation points
         tau_root = np.append(0, ca.collocation_points(self._d, 'legendre'))
@@ -73,7 +74,7 @@ class MpcProblem:
                     p *= np.poly1d([1, -tau_root[r]]) / (tau_root[j]-tau_root[r])
 
             # Evaluate the polynomial at the final time to get the coefficients of the continuity equation
-            self._D[j] = p(1.0)
+            self._D[j] = p(t_f)
 
             # Evaluate the time derivative of the polynomial at all collocation points to get the coefficients of the continuity equation
             pder = np.polyder(p)
@@ -82,7 +83,7 @@ class MpcProblem:
 
             # Evaluate the integral of the polynomial to get the coefficients of the quadrature function
             pint = np.polyint(p)
-            self._B[j] = pint(1.0)
+            self._B[j] = pint(t_f)
 
 
     def run(self, ic:np.array):
@@ -97,6 +98,9 @@ class MpcProblem:
         lbg = [] # lower bound on constraint
         ubg = [] # upper bound on constraint
         fixed_points = [] # any hard constraints on a certain state
+
+        # do the direct collocation
+        self.make_direct_collocation(self.model.step*self.model.N)
 
         # For plotting x and u given w
         x_plot = []
