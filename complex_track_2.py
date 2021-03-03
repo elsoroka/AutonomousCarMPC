@@ -145,3 +145,5 @@ complex_track_2 = np.array([
 [-80.759, -155.803],
 [-71.002, -155.912],
 ])
+
+complex_track_2_width = 5.0*np.ones(np.size(complex_track_2)//2)

@@ -101,6 +101,7 @@ class MpcProblem:
         # For plotting x and u given w
         x_plot = []
         u_plot = []
+        self.x_center_plot = np.empty((self.model.n, self.model.N))
         self.p_plot = np.empty((self.model.N+1, self.model.n, 2))
 
         # "Lift" initial conditions
@@ -212,7 +213,8 @@ class MpcProblem:
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
             xy_k = self.roadrunner.center(self.model.step, k+1, self.model.desired_speed)
-
+            self.x_center_plot[0:-1,k] = xy_k
+            self.x_center_plot[-1,k] = self.model.desired_speed(k)
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
             # we want to match the x-y position and road angle
@@ -225,7 +227,7 @@ class MpcProblem:
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
         cost = 1.0*self.attractive_cost + \
-               10.0*self.jerk_cost + \
+               100.0*self.jerk_cost + \
                10.0*180/np.pi*self.steering_change_cost + \
                1.0*J # belongs to direct_collocation, probably leftover
                # from the example this code was built from
@@ -267,7 +269,7 @@ class MpcProblem:
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
         print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])
-        self.Uk_prev = [self.u_opt[0,0], self.u_opt[1,0]]
+        self.Uk_prev = None # [self.u_opt[0,0], self.u_opt[1,0]]# we don't need this
 
         return self.x_opt, self.u_opt, solver.stats()
 

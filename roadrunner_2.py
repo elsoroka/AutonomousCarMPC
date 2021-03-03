@@ -43,7 +43,7 @@ class OutOfRoadPointsException(Exception):
 class Roadrunner:
 
 	def __init__(self, road_center:np.array, road_width:np.array,
-		P=10, start_pct = 0.3, end_pct = 0.7):
+		P=20, start_pct = 0.35, end_pct = 0.65):
 
 		self.P = P # Number of points to fit at one time
 		# Fraction of curve length where we start using the curve
@@ -287,7 +287,7 @@ class Roadrunner:
 		return min_idx, dist
 
 	@staticmethod
-	def find_closest_pt(curve, match_pt:np.array, runs=3, start=0.0, end=1.0)->(float, float):
+	def find_closest_pt(curve, match_pt:np.array, runs=2, start=0.0, end=1.0)->(float, float):
 		'''Given an xy point match_pt, find the closest point on the curve B.
 		Returns the corresponding s for the curve B(s) and the distance
 		between match_pt and B(s) (which can be 0 if match_pt is on B).
@@ -299,7 +299,7 @@ class Roadrunner:
 
 			x = None
 			for r in range(runs):
-				x = np.linspace(start,end,10)
+				x = np.linspace(start,end,256)
 				min_idx,dist = Roadrunner._find_closest_in_x_to_pt(curve, x, match_pt)
 				min_s = x[min_idx]
 
@@ -311,7 +311,7 @@ class Roadrunner:
 
 			# Check: if this closest point is "too far"
 			if dist > 2.5:
-				print("find_closest_pt may be unreliable: closest match found for {} is {} away at s = {}, B(s) = {}".format(match_pt, dist, min_s, curve.evaluate(min_s)))
+				print("WARNING: find_closest_pt may be unreliable: closest match found for {} is {} away at s = {}, B(s) = {}".format(match_pt, dist, min_s, curve.evaluate(min_s)))
 
 		return min_s, dist
 
@@ -339,10 +339,10 @@ class Roadrunner:
 	    dist = step*np.sum([desired_speed(i) for i in range(k)])
 
 	    dist_behind = dist - step*sum([desired_speed(i) for i in range(k-10,k)]) # 5 steps behind * timestep * velocity at point k
-	    print("Looking behind by", dist_behind, dist_behind - dist)
+	    #print("Looking behind by", dist_behind, dist_behind - dist)
 	    (center_minus, angle_minus, width_minus) = self.evaluate(dist_behind, full_data=True)
 	    dist_ahead = dist + step*sum([desired_speed(i) for i in range(k+1,k+11)]) # 5 steps ahead * timestep * velocity at point k
-	    print("Looking ahead by", dist_ahead, dist_ahead - dist)
+	    #print("Looking ahead by", dist_ahead, dist_ahead - dist)
 	    (center_plus, angle_plus, width_plus) = self.evaluate(dist_ahead, full_data=True)
 
 	    center_minus = np.reshape(center_minus,(2,))
@@ -380,10 +380,10 @@ class Roadrunner:
 	    
 	    
 	    # The slopes between the points
-	    slope12 = (p2[1]-p1[1])/(p2[0]-p1[0]); slope12 = 1e4 if np.isnan(slope12) else slope12
-	    slope23 = (p3[1]-p2[1])/(p3[0]-p2[0]); slope23 = 1e4 if np.isnan(slope23) else slope23
-	    slope43 = (p3[1]-p4[1])/(p3[0]-p4[0]); slope43 = 1e4 if np.isnan(slope43) else slope43
-	    slope14 = (p1[1]-p4[1])/(p1[0]-p4[0]); slope14 = 1e4 if np.isnan(slope14) else slope14
+	    slope12 = (p2[1]-p1[1])/(p2[0]-p1[0]); slope12 = 1e4 if np.isinf(slope12) else slope12
+	    slope23 = (p3[1]-p2[1])/(p3[0]-p2[0]); slope23 = 1e4 if np.isinf(slope23) else slope23
+	    slope43 = (p3[1]-p4[1])/(p3[0]-p4[0]); slope43 = 1e4 if np.isinf(slope43) else slope43
+	    slope14 = (p1[1]-p4[1])/(p1[0]-p4[0]); slope14 = 1e4 if np.isinf(slope14) else slope14
 	    
 	    slopes = [(slope12, p1, p2), (slope23, p2, p3), (slope43, p4, p3), (slope14, p4, p1)]
 	    
