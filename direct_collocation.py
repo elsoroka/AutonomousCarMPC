@@ -221,15 +221,15 @@ class MpcProblem:
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2 + \
-                                     10*(Xk[2] - self.model.desired_speed(k))**2)
+                                     (Xk[2] - self.model.desired_speed(k))**2)
             self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
         cost = 1.0*self.attractive_cost + \
-               100.0*self.jerk_cost + \
-               10.0*180/np.pi*self.steering_change_cost + \
-               1.0*J # belongs to direct_collocation, probably leftover
+               500.0*self.jerk_cost + \
+               50.0*180/np.pi*self.steering_change_cost + \
+               0.5*J # belongs to direct_collocation, probably leftover
                # from the example this code was built from
             
 
@@ -269,7 +269,8 @@ class MpcProblem:
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
         print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])
-        self.Uk_prev = None # [self.u_opt[0,0], self.u_opt[1,0]]# we don't need this
+        self.Uk_prev = None #[self.u_opt[0,0], self.u_opt[1,0]]# we don't need this? we do.
+
 
         return self.x_opt, self.u_opt, solver.stats()
 

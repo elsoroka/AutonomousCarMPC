@@ -43,7 +43,7 @@ class OutOfRoadPointsException(Exception):
 class Roadrunner:
 
 	def __init__(self, road_center:np.array, road_width:np.array,
-		P=20, start_pct = 0.35, end_pct = 0.65):
+		P=20, start_pct = 0.3, end_pct = 0.7):
 
 		self.P = P # Number of points to fit at one time
 		# Fraction of curve length where we start using the curve
@@ -287,7 +287,7 @@ class Roadrunner:
 		return min_idx, dist
 
 	@staticmethod
-	def find_closest_pt(curve, match_pt:np.array, runs=2, start=0.0, end=1.0)->(float, float):
+	def find_closest_pt(curve, match_pt:np.array, runs=4, start=0.0, end=1.0)->(float, float):
 		'''Given an xy point match_pt, find the closest point on the curve B.
 		Returns the corresponding s for the curve B(s) and the distance
 		between match_pt and B(s) (which can be 0 if match_pt is on B).
