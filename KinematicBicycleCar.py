@@ -163,62 +163,61 @@ class KinematicBicycleCar(AbstractBaseCar):
 
 
 	# PLOTTING
-	def plot_u(self, u_executed:np.array, u_planned:np.array):
-		fig1, (ax1, ax2) = plt.subplots(1, 2,
-			figsize=(12,4), sharex=True,
-			gridspec_kw={'wspace': 0.5})
+def plot_u( u_executed:np.array, u_planned:np.array, step, N):
+	fig1, (ax1, ax2) = plt.subplots(1, 2,
+		figsize=(12,4), sharex=True,
+		gridspec_kw={'wspace': 0.5})
 
-		# Plot the given data
-		tgrid = np.linspace(0, self.step*len(u_executed[0]), len(u_executed[0]))
-		ax1.step(tgrid, u_executed[0],           label="(executed)")
-		ax2.step(tgrid, 180/np.pi*u_executed[1], label="(executed)")
+	# Plot the given data
+	tgrid = np.linspace(0, step*len(u_executed[0]), len(u_executed[0]))
+	ax1.step(tgrid, u_executed[0],           label="(executed)")
+	ax2.step(tgrid, 180/np.pi*u_executed[1], label="(executed)")
 
-		# Plot the last optimal path computed
-		tgrid = np.linspace(tgrid[-1] , tgrid[-1] + self.T, self.N)
-		ax1.step(tgrid, u_planned[0],           label="(planned)")
-		ax2.step(tgrid, 180/np.pi*u_planned[1], label="(planned)")
+	# Plot the last optimal path computed
+	tgrid = np.linspace(tgrid[-1] , tgrid[-1] + step*N, N)
+	ax1.step(tgrid, u_planned[0],           label="(planned)")
+	ax2.step(tgrid, 180/np.pi*u_planned[1], label="(planned)")
 
-		# Fix the legend and labels
-		ax2.legend(bbox_to_anchor=(1.05, 1),
-				   loc='upper left',
-				   borderaxespad=0.0)
-		ax1.set(ylabel="Acceleration, m/s^2",  xlabel="Time (s)")
-		ax2.set(ylabel="Steering angle, deg.", xlabel="Time (s)")
-		fig1.suptitle("Control signals")
+	# Fix the legend and labels
+	ax2.legend(bbox_to_anchor=(1.05, 1),
+			   loc='upper left',
+			   borderaxespad=0.0)
+	ax1.set(ylabel="Acceleration, m/s^2",  xlabel="Time (s)")
+	ax2.set(ylabel="Steering angle, deg.", xlabel="Time (s)")
+	fig1.suptitle("Control signals")
 
-		return fig1, ax1, ax2
+	return fig1, ax1, ax2
 
+def plot_x(x_executed:np.array, x_planned:np.array, step, N):
+	fig2, ax = plt.subplots(1,1,
+		figsize=(14, 6))
 
-	def plot_x(self, x_executed:np.array, x_planned:np.array):
-		fig2, ax = plt.subplots(1,1,
-			figsize=(14, 6))
-
-		# Plot the last optimal path computed
-		tgrid = np.linspace(0, self.T, self.N)
+	# Plot the last optimal path computed
+	tgrid = np.linspace(0, step*N, N)
 #		vx = np.multiply(x_planned[2],np.cos(x_planned[3]))
 #		vy = np.multiply(x_planned[2],np.sin(x_planned[3]))
 #		q = ax.quiver(x_planned[0], x_planned[1], vx, vy,
 #					  color='orange', linewidth=0.5,)
-	#	ax.quiverkey(q, X=0.25, Y=0.2, U=5,
+#	ax.quiverkey(q, X=0.25, Y=0.2, U=5,
 #					 label='Planned', labelpos='E')
 
-		# Plot the x given
-		tgrid = np.linspace(0, self.T, len(x_executed[0]))
+	# Plot the x given
+	tgrid = np.linspace(0, step*N, len(x_executed[0]))
 #		vx = np.multiply(x_executed[2],np.cos(x_executed[3]))
 #		vy = np.multiply(x_executed[2],np.sin(x_executed[3]))
-		#q = ax.quiver(x_executed[0], x_executed[1], vx, vy,
-	#				  color='blue', linewidth=0.5,)
-		#ax.quiverkey(q, X=0.25, Y=0.1, U=5,
-		#			 label='Velocity', labelpos='E')
+	#q = ax.quiver(x_executed[0], x_executed[1], vx, vy,
+#				  color='blue', linewidth=0.5,)
+	#ax.quiverkey(q, X=0.25, Y=0.1, U=5,
+	#			 label='Velocity', labelpos='E')
 
-		# Plot position dots over the arrows. It looks better.
-		ax.scatter(x_executed[0], x_executed[1], color='navy')
-		ax.scatter(x_planned[0],  x_planned[1],  color='red')
+	# Plot position dots over the arrows. It looks better.
+	ax.scatter(x_executed[0], x_executed[1], color='navy')
+	ax.scatter(x_planned[0],  x_planned[1],  color='red')
 
-		ax.set(xlabel="x (m)",ylabel="y (m)")
-		fig2.suptitle("Trajectory")
+	ax.set(xlabel="x (m)",ylabel="y (m)")
+	fig2.suptitle("Trajectory")
 
-		return fig2, ax
+	return fig2, ax
 
 	def plot_with_time(self, x_executed:np.array, x_planned:np.array, boundary_up:np.array, boundary_low:np.array):
 		fig1, (ax1, ax2) = plt.subplots(2,1, figsize=(10,4), sharex=True)
