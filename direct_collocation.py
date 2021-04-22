@@ -32,20 +32,46 @@ import casadi as ca
 import numpy  as np
 import matplotlib.pyplot as plt
 
+from scipy.integrate import ode
+from KinematicBicycleCar import KinematicBicycleCar
+
+
 class MpcProblem:
 
-    def __init__(self, model, roadrunner): # casadi symbolic objective
+    def __init__(self, model, roadrunner, step, N, desired_speed): # casadi symbolic objective
 
+        self.step = step
+        self.N = N
         self.model = model
+        self.desired_speed = desired_speed
         self.roadrunner = roadrunner
-        self.sys  = model.getDae()
         self.cost = 0
-        self.Uk_prev = None
+        self.oldmodel = KinematicBicycleCar(N = 30, step = 0.01)
+        self.sys = self.oldmodel.dae
+        self.Uk_prev = np.zeros(2)
 
-        # hack
+        self.state_estimate = None
+        self.control_estimate = np.zeros((self.model.m, self.N))
+        state = roadrunner.save_state()
+
+        if self.state_estimate is None:
+            self.state_estimate = np.empty((self.model.n,self.N+1))
+            for i in range(self.N+1):
+                (xy, psi, _) = roadrunner.evaluate(full_data=True)
+                # x,y
+                self.state_estimate[0:2,i] = xy
+                self.state_estimate[2,i]   = self.desired_speed(i)
+                self.state_estimate[3,i]   = psi
+                # Very bad rough estimate of acceleration
+                if i < self.N:
+                    self.control_estimate[0,i] = (self.desired_speed(i+1) - self.desired_speed(i))/(2*self.step)
+
+                roadrunner.advance(self.desired_speed(i)*self.step)
+
+        roadrunner.reset(**state)
 
         params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
-        self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
+        self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':step})
 
         # Set up collocation (from direct_collocation example)
 
@@ -101,8 +127,8 @@ class MpcProblem:
         # For plotting x and u given w
         x_plot = []
         u_plot = []
-        self.x_center_plot = np.empty((self.model.n, self.model.N))
-        self.p_plot = np.empty((self.model.N+1, self.model.n, 2))
+        self.x_center_plot = np.empty((self.model.n, self.N))
+        self.p_plot = np.empty((self.N+1, self.model.n, 2))
 
         # "Lift" initial conditions
         Xk = ca.MX.sym('z0', self.model.n)
@@ -124,18 +150,24 @@ class MpcProblem:
                         ['x', 'u'],['xdot', 'L'])
 
         # for plotting
-        bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
+        bounds, p = self.roadrunner.bound_x(self.step, 0, self.desired_speed)
         self.p_plot[0,:,:] = p
 
         # Formulate the NLP
-        for k in range(self.model.N):
+        for k in range(self.N):
             # New NLP variable for the control
             Uk = ca.MX.sym("U_"+str(k), self.model.m)
             w.append(Uk)
-            lbw.append(np.reshape(self.model.lowerbounds_u(k), (self.model.m,)))
-            ubw.append(np.reshape(self.model.upperbounds_u(k), (self.model.m,)))
+
+            #lb_u = np.reshape(self.model.lowerbounds_u(k), (self.model.m,))
+            #ub_u = np.reshape(self.model.upperbounds_u(k), (self.model.m,))
+            lb_u, ub_u = self.model.u_bound()
+            opti.subject_to(opti.bounded(lb_u, Uk, ub_u))
+            #lbw.append(np.reshape(self.model.lowerbounds_u(k), (self.model.m,)))
+            #ubw.append(np.reshape(self.model.upperbounds_u(k), (self.model.m,)))
+
             # recall w0 is the guess of w, the decision variables
-            w0.append(self.model.control_estimate[:,k])
+            w0.append(self.control_estimate[:,k])
             u_plot.append(Uk)
 
             # Add to control change costs
@@ -151,12 +183,17 @@ class MpcProblem:
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
-                lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
-                ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
-                w0.append(self.model.state_estimate[:,k])                
+
+                #lb_x = np.reshape(self.model.lowerbounds_x(k), (self.model.n,))
+                #ub_x = np.reshape(self.model.upperbounds_x(k), (self.model.n,))
+                lb_x, ub_x = self.model.z_bound()
+                opti.subject_to(opti.bounded(lb_x, Xkj, ub_x))
+                #lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
+                #ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+                w0.append(self.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
-                bounds, p = self.roadrunner.bound_x(self.model.step,k, self.model.desired_speed)
+                bounds, p = self.roadrunner.bound_x(self.step,k, self.desired_speed)
 
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
@@ -175,28 +212,34 @@ class MpcProblem:
                for r in range(self._d): xp = xp + self._C[r+1,j]*Xc[r]
 
                # Append collocation equations
-               fj, qj = f(Xc[j-1],Uk)
-               g.append(self.model.step*fj - xp)
-               lbg.append(np.zeros((self.model.n,)))
-               ubg.append(np.zeros((self.model.n,)))
+
+               fj , qj = f(Xc[j-1],Uk)
+               #g.append(self.model.step*fj - xp)
+               #lbg.append(np.zeros((self.model.n,)))
+               #ubg.append(np.zeros((self.model.n,)))
+               opti.subject_to(self.step*fj == xp)
 
                # Add contribution to the end state
                Xk_end = Xk_end + self._D[j]*Xc[j-1];
 
                # Add contribution to quadrature function
-               J = J + self._B[j]*qj*self.model.step
+               #J = J + self._B[j]*qj*self.model.step
 
             # New NLP variable for state at end of interval
             Xk = ca.MX.sym('X_' + str(k+1), self.model.n)
             w.append(Xk)
-            lbw.append(np.reshape(self.model.lowerbounds_x(k+1), (self.model.n,)))
-            ubw.append(np.reshape(self.model.upperbounds_x(k+1), (self.model.n,)))
+
+            #lbw.append(np.reshape(self.model.lowerbounds_x(k+1), (self.model.n,)))
+            lb_x, ub_x = self.model.z_bound()
+            #ubw.append(np.reshape(self.model.upperbounds_x(k+1), (self.model.n,)))
+            opti.subject_to(opti.bounded(lb_x, Xk, ub_x))
+
     
-            w0.append(self.model.state_estimate[:,k+1])
+            w0.append(self.state_estimate[:,k+1])
             x_plot.append(Xk)
 
             # Add the polygonal bounds at step k+1
-            bounds, p = self.roadrunner.bound_x(self.model.step,k+1, self.model.desired_speed)
+            bounds, p = self.roadrunner.bound_x(self.step,k+1, self.desired_speed)
                 
             for (ub, a, b, c, lb) in bounds:
                 ubg.append(np.reshape(ub,(1,)))
@@ -212,16 +255,16 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
-            xy_k = self.roadrunner.center(self.model.step, k+1, self.model.desired_speed)
+            xy_k = self.roadrunner.center(self.step, k+1, self.desired_speed)
             self.x_center_plot[0:-1,k] = xy_k
-            self.x_center_plot[-1,k] = self.model.desired_speed(k)
+            self.x_center_plot[-1,k] = self.desired_speed(k)
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
             # we want to match the x-y position and road angle
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2 + \
-                                     (Xk[2] - self.model.desired_speed(k))**2)
+                                     (Xk[2] - self.desired_speed(k))**2)
             self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road
@@ -237,6 +280,7 @@ class MpcProblem:
         f = ca.Function('f', [self.sys.x[0], self.sys.u[0]],
                     [self.sys.ode[0], cost],
                     ['x', 'u'],['xdot', 'L'])
+
 
         # Concatenate vectors
         w = ca.vertcat(*w)
@@ -264,8 +308,8 @@ class MpcProblem:
         self.u_opt = u_opt.full() # to numpy array
 
         # Feed the previous stateback to the model
-        self.model.set_state_estimate(self.x_opt)
-        self.model.set_control_estimate(self.u_opt)
+        self.set_state_estimate(self.x_opt)
+        self.set_control_estimate(self.u_opt)
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
         print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])
@@ -279,3 +323,35 @@ class MpcProblem:
       xf = r['xf']
       return np.reshape(xf, (self.model.n,))
 
+      '''  def f(t, z, u):
+            x_i, y_i, v_i, psi_i = z[0], z[1], z[2], z[3]
+            a_i, delta_f_i = u[0], u[1]
+            beta = np.arctan(self.model.lr/(self.model.lr+self.model.lf)*np.tan(delta_f_i))
+            return [
+                v_i*np.cos(psi_i + beta),
+                v_i*np.sin(psi_i + beta),
+                a_i,
+                v_i/self.model.lr*np.sin(beta),
+            ]
+        r = ode(f)
+
+        r.set_initial_value(x, 0.0).set_f_params(u)
+        return r.integrate(r.t+self.step)'''
+
+
+    def set_state_estimate(self, state_estimate:np.array):
+        # The state estimate is the previous optimal state
+        # so we take the state at time k+1 for our new time k
+        self.state_estimate[:,:-1] = state_estimate[:,1:]
+        # The last one, we don't know. So we guess it's
+        # the second-to-last one.
+        self.state_estimate[:,-1] = self.state_estimate[:,-2]
+
+    def set_control_estimate(self, control_estimate:np.array):
+        # The control estimate is the previous optimal control
+        # so we take the control at time k+1 for our new time k
+        self.control_estimate[:,:-1] = control_estimate[:,1:]
+        # The last one, we don't know. So we guess it's
+        # zero?
+        self.control_estimate[:,-1] = np.zeros((self.model.m,)) #self.control_estimate[:,-2]
+    
