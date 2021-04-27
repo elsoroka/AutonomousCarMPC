@@ -115,6 +115,8 @@ class MpcProblem:
         self.attractive_cost = 0.0
         self.jerk_cost = 0.0
         self.steering_change_cost = 0.0
+        self.steering_magnitude_cost = 0.0
+        self.accel_magnitude_cost = 0.0
 
         # Create a matrix function
         # HACK: breaks if multiple state variables instead of one vector state
@@ -138,10 +140,12 @@ class MpcProblem:
             w0.append(self.model.control_estimate[:,k])
             u_plot.append(Uk)
 
-            # Add to control change costs
+            # Add to control costs
             if None != self.Uk_prev:
                 self.jerk_cost += (Uk[0]-self.Uk_prev[0])**2
                 self.steering_change_cost += (Uk[1]-self.Uk_prev[1])**2
+                self.steering_magnitude_cost += Uk[1]**2
+                self.accel_magnitude_cost += Uk[0]**2
 
             self.Uk_prev = Uk
 
@@ -212,7 +216,7 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
-            xy_k = self.roadrunner.center(self.model.step, k+1, self.model.desired_speed)
+            xy_k = self.roadrunner.center(self.model.step, k, self.model.desired_speed)
             self.x_center_plot[0:-1,k] = xy_k
             self.x_center_plot[-1,k] = self.model.desired_speed(k)
             # recall Xk[0] and Xk[1] are world frame x-y position
@@ -221,16 +225,18 @@ class MpcProblem:
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2 + \
-                                     (Xk[2] - self.model.desired_speed(k))**2)
+                                     2.0*(Xk[2] - self.model.desired_speed(k))**2)
             self.p_plot[k+1,:,:] = p
         
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
-        cost = 1.0*self.attractive_cost + \
-               500.0*self.jerk_cost + \
-               50.0*180/np.pi*self.steering_change_cost + \
-               0.5*J # belongs to direct_collocation, probably leftover
-               # from the example this code was built from
+        cost = 0.1*self.attractive_cost + \
+               100.0*self.jerk_cost + \
+               10.0*180/np.pi*self.steering_change_cost + \
+               0.0*self.steering_magnitude_cost + \
+               0.0*self.accel_magnitude_cost + \
+               1.0*J # belongs to direct_collocation,  leftover
+               # from the example this code was built from and unused
             
 
 
@@ -263,9 +269,16 @@ class MpcProblem:
         self.x_opt = x_opt.full() # to numpy array
         self.u_opt = u_opt.full() # to numpy array
 
-        # Feed the previous stateback to the model
-        self.model.set_state_estimate(self.x_opt)
-        self.model.set_control_estimate(self.u_opt)
+        # Feed the previous state back to the model
+        state = self.roadrunner.save_state()
+        est = np.zeros((self.model.n,self.model.N+1))
+        for i in range(self.model.N+1):
+            xy, angle, _ = self.roadrunner.evaluate(0, full_data=True)
+            est[:,i] = np.array([xy[0,0], xy[0,1], self.model.desired_speed(i), angle])
+            self.roadrunner.advance(self.model.step*self.model.desired_speed(i))
+        self.roadrunner.reset(**state)
+        self.model.set_state_estimate(est)
+        self.model.set_control_estimate(np.zeros((self.model.m,self.model.N)))#self.u_opt)
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
         print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])

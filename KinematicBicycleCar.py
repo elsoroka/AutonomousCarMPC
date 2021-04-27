@@ -21,7 +21,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		self.N    = N
 		self.step = step
 		self.T   = N*step # Time horizon (seconds)
-
+		self.u_upper = 2.5
 		self.fixed_points = dict() # None yet
 
 		# Constants
@@ -141,7 +141,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 			return np.array([np.inf,
                   			np.inf,
                   			50.0,
-                  			np.pi,
+                  			2.0*np.pi,
 							])
 
 	def lowerbounds_x(self, k:int)->np.array:
@@ -151,15 +151,15 @@ class KinematicBicycleCar(AbstractBaseCar):
 			return np.array([-np.inf,
                   			 -np.inf,
                  			  0.0,
-                 			 -np.pi,
+                 			 -2.0*np.pi,
                  			 ])
 
 
 	def upperbounds_u(self, k:int)->np.array:
-		return np.array([2.5, np.pi/4]) # <= 0.84 preferred
+		return np.array([self.u_upper, np.pi/4]) # <= 0.84 preferred # should be 2.5
 
 	def lowerbounds_u(self, k:int)->np.array:
-		return np.array([-5, -np.pi/4]) # >= -1.70 preferred
+		return np.array([-5.0, -np.pi/4]) # >= -1.70 preferred
 
 
 	# PLOTTING
