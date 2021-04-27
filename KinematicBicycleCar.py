@@ -188,9 +188,9 @@ def plot_u( u_executed:np.array, u_planned:np.array, step, N):
 
 	return fig1, ax1, ax2
 
-def plot_x(x_executed:np.array, x_planned:np.array, step, N):
+def plot_x(x_executed:np.array, x_planned:np.array, step, N, figsize=(12,3)):
 	fig2, ax = plt.subplots(1,1,
-		figsize=(14, 6))
+		figsize=figsize)
 
 	# Plot the last optimal path computed
 	tgrid = np.linspace(0, step*N, N)

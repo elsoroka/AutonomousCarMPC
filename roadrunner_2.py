@@ -338,10 +338,10 @@ class Roadrunner:
 	    # so there is freedom to slow down or speed up the vehicle.
 	    dist = step*np.sum([desired_speed(i) for i in range(k)])
 
-	    dist_behind = dist - step*sum([desired_speed(i) for i in range(k-10,k)]) # 5 steps behind * timestep * velocity at point k
+	    dist_behind = dist - step*sum([desired_speed(i) for i in range(k-20,k)]) # 5 steps behind * timestep * velocity at point k
 	    #print("Looking behind by", dist_behind, dist_behind - dist)
 	    (center_minus, angle_minus, width_minus) = self.evaluate(dist_behind, full_data=True)
-	    dist_ahead = dist + step*sum([desired_speed(i) for i in range(k+1,k+10)]) # 5 steps ahead * timestep * velocity at point k
+	    dist_ahead = dist + step*sum([desired_speed(i) for i in range(k+1,k+21)]) # 5 steps ahead * timestep * velocity at point k
 	    #print("Looking ahead by", dist_ahead, dist_ahead - dist)
 	    (center_plus, angle_plus, width_plus) = self.evaluate(dist_ahead, full_data=True)
 
