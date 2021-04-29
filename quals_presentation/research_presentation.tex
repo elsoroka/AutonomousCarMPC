@@ -26,29 +26,82 @@
 	% 1.What is the research problem? Why is it hard? Who does it impact?
 \begin{frame}
 \frametitle{Software Reusability: A Growing Problem}
-Advanced driver assistance systems (ADAS) and autonomous vehicles are a rapidly growing segment of the automotive industry.
+Advanced driver assistance systems (ADAS) and autonomous vehicles are a rapidly growing segment of the automotive industry
+\begin{columns}
+	\begin{column}{0.5\linewidth}
+\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/miles_driven_waymo.png}
+	\caption{Autonomous miles driven by top California companies}
+\end{figure}
+	\end{column}
+	\begin{column}{0.45\linewidth}
+\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/miles_by_autonomous_cars.png}
+	\caption{Number of self-driving vehicles on the road}
+\end{figure}
+\end{column}
+\end{columns}
 
-However, this success comes with new challenges in software reusability.
-
-To equip more vehicles for autonomous driving, manufacturers must be able to:
-\begin{itemize}
-	\item Port an existing autonomous driving stack to vehicles with different capabilities and sensor configurations.
-	\item Verify safety-critical software operates correctly on different platforms.
-	\item Comply with regulations and standards.
-\end{itemize}
+\tiny(Chart source:\ \texttt{https://www.wired.com/story/california-self-driving-cars-log-most-miles/})
+\normalsize
 \end{frame}
 
 \begin{frame}
-\frametitle{Software Portability in the Autonomy Stack}
-Some high-level modules are relatively independent of vehicle hardware, such as route planning, computer vision, and other high-level processes.
-
-However, low-level control depends on the vehicle's specific hardware for a variety of reasons.
+\frametitle{Software Reusability: A Growing Problem}
+The rise of autonomous driving comes with new challenges in software reusability.
 \begin{itemize}
-	\item Fuel efficiency: hybrid vehicle vs electric vehicle, regenerative braking.
-	\item Physical parameters: weight, center of gravity (CG), tire size and tire-road interactions.
-	\item Engine performance (number of cylinders, front-wheel drive vs all-wheel drive, etc).
+	\item Port an existing autonomous driving stack to different vehicles
+	\item Verify safety-critical software operates correctly on different platforms.
+	\item Comply with regulations and standards.
 \end{itemize}
-\textbf{In this presentation, we focus on low-level steering and acceleration control.} High-level modules provide a path to follow: our goal is to track it.
+\begin{figure}
+	\includegraphics[width=0.9\linewidth]{figures/one.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Software Reusability: A Growing Problem}
+The rise of autonomous driving comes with new challenges in software reusability.
+\begin{itemize}
+	\item Port an existing autonomous driving stack to different vehicles
+	\item Verify safety-critical software operates correctly on different platforms.
+	\item Comply with regulations and standards.
+\end{itemize}
+\begin{figure}
+	\includegraphics[width=0.9\linewidth]{figures/one_to_many.png}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Software Portability in the Autonomy Stack}
+
+\begin{columns}
+	\begin{column}{0.5\linewidth}
+High-level software (route planning, computer vision) is easily ported to different vehicles.
+		% such as route planning, computer vision, and other high-level processes.
+		
+		However, low-level control depends on vehicle-specific hardware for multiple reasons.
+		\begin{itemize}
+			\item Fuel efficiency
+			%hybrid vehicle vs electric vehicle, regenerative braking.
+			\item Physical parameters
+			\item Vehicle dynamics
+			%weight, center of gravity (CG), tire size and tire-road interactions.
+			\item Engine performance
+			% (number of cylinders, front-wheel drive vs all-wheel drive, etc).
+		\end{itemize}
+		\end{column}
+	\begin{column}{0.45\linewidth}
+		\begin{figure}
+			\includegraphics[width=1.0\linewidth]{figures/autonomy_stack_small.png}
+			% Comment: This is a standard autonomy stack
+		\end{figure}
+	\end{column}
+\end{columns}
+\vspace{1.0em}
+
+In this presentation, we focus on steering and acceleration control. Our goal is to \textbf{disentangle hardware-dependent control algorithms from higher-level software.}
 \end{frame}
 
 \begin{frame}
@@ -65,53 +118,78 @@ However, not all applications weight these equally.
 \item Autonomous delivery truck: maximize fuel efficiency.
 \item Autonomous taxi: provide a comfortable and enjoyable ride.
 \end{itemize}
-Configurable behavior is already on the market: many ADAS systems allow switching between ``sport" and ``eco-friendly" driving modes.
+%Configurable behavior is already on the market: many ADAS systems allow switching between ``sport" and ``eco-friendly" driving modes.
+
+\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/configurability.png}
+\end{figure}
 \end{frame}
 
+	\begin{frame}
+\frametitle{Software reusability perspective}
+Changing behavior is also a high-level goal.
+\begin{columns}
+	\begin{column}{0.65\linewidth}
+\begin{itemize}
+	\item What speed does the vehicle drive at?
+	\item What lane does it drive in?
+\end{itemize}
+	\end{column}
+\begin{column}{0.35\linewidth}
+		\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/waymo_truck.png}
+\end{figure}
+\end{column}
+\end{columns}
+\vspace{1.0em}
+However, to plan these behaviors the autonomy software must know what its hardware is capable of.
+\begin{itemize}
+	\item If our trajectory planner is platform-independent, it can't take advantage of the full capabilities of the hardware.
+	
+	\item If our planner is hardware-dependent, it will be difficult to port the software to new vehicles.
+\end{itemize}
 
+\end{frame}
 % 2.How is it solved today? What are the limits of current practice?
+
+
+\begin{frame}
+\frametitle{Literature review}
+
+TODO: (How to handle citations???)
+\end{frame}
+
 \begin{frame}
 	\frametitle{Trajectory Tracking with Waypoints}
 In trajectory tracking (as opposed to trajectory planning or optimization), the goal is to follow a given path as closely as possible. Many approaches are possible, including	PID and tracking MPC.
-	Some challenges with trajectory tracking include:
+
+Challenges with trajectory tracking:
 	\begin{itemize}
 		\item Tuning PID gains
 		\item Proving a PID controller is stable
 		\item Developing controllers for complex vehicle models that represent the interactions between tires, axles, vehicle body, suspension, etc.
 	\end{itemize}
-Problem: A higher-level module must have enough information about the vehicle hardware to generate the waypoints.
+\textbf{Problem: A higher-level module must have enough information about vehicle hardware to generate the waypoints.}
 \end{frame}
 	
+	% 3.What is the new technical idea?
 \begin{frame}
 \frametitle{Trajectory Optimization: Beyond Waypoints?}
 Some controllers have also been developed to optimize the vehicle's trajectory: for example, by determining the best path in a safe driving corridor.
 
-The high-level software could provide this safe corridor and some high-level goals (``drive at this speed", ``stop at this point"). The exact path is determined by the steering controller.
+High-level software could provide this safe corridor and goals (``drive at this speed", ``stop at this point"). The exact path is determined by the steering controller.
 
-Some challenges with this approach include:
+Some challenges with this approach:
 \begin{itemize}
 	\item The vehicle has nonlinear dynamics that add difficulty to the optimization problem.
-	\item The safe corridor the vehicle can drive in is more difficult to represent.
+	\item The safe corridor the vehicle can drive in is difficult to represent.
 	\item The vehicle model must be computationally tractable.
 	\item The optimization must run in real time.
 \end{itemize}
 \end{frame}
-	
-% 3.What is the new technical idea?
-	
-	
-	\begin{frame}
-	\frametitle{Software reusability perspective}
-	Changing behavior is arguably a high-level goal, affecting what speed the vehicle drives at, what lanes it drives in, and other decisions.
-	
-	However, to plan these behaviors the autonomy software must know what its hardware is capable of.
-	\begin{itemize}
-		\item If our trajectory planner is platform-independent, it can't take advantage of the full capabilities of the hardware.
-		
-		\item If our planner is hardware-dependent, it will be difficult to port the software to new vehicles.
-	\end{itemize}
 
-\end{frame}
+	
+
 %\begin{frame}
 %\frametitle{Improving Software Reusability}
 %\begin{itemize}
@@ -143,7 +221,7 @@ Low-level controller optimizes this path.
 \end{itemize}
 \vspace{-0.5em}
 \begin{figure}
-\includegraphics[width=0.9\linewidth]{division.png}
+\includegraphics[width=0.9\linewidth]{figures/division.png}
 \end{figure}
 \end{frame}
 
@@ -156,6 +234,7 @@ Model-predictive control (MPC) is a good choice for the low-level controller.
 \item Constraints can be used to guarantee a trajectory won't violate safety requirements.
 \item Vehicle kinematics models can be switched out without requiring major modifications to the controller.
 \end{itemize}
+
 \end{frame}
 
 \begin{frame}
@@ -169,15 +248,15 @@ Nonlinear optimization is difficult to implement.
 
 Trade-off between model accuracy and computational tractability.
 \begin{itemize}
-	\item Even ``simple" models like the kinematic bicycle can be difficult to work with.
-	\item Adding complexity worsens this issue, but is necessary to handle a full range of driving conditions (example: knowledge of tire-road interactions is important in an emergency stop).
+	\item Even ``simple" models can be difficult to discretize.
+	\item Adding complexity worsens this issue, but is necessary to handle a full range of driving conditions.%(example: knowledge of tire-road interactions is important in an emergency stop).
 \end{itemize}
 \end{frame}
 
 
 \begin{frame}{Implementation of MPC controller}
 \begin{figure}
-	\includegraphics[width=0.38\linewidth]{kinematic_diagram.png}
+	\includegraphics[width=0.38\linewidth]{figures/kinematic_diagram.png}
 	\caption{Kinematic bicycle model, commonly used in MPC controllers.}
 \end{figure}
 \vspace{-0.5em}
@@ -205,12 +284,16 @@ $\beta$ is the angle between the car velocity and its longitudinal axis \eqref{e
 \begin{frame}
 \frametitle{Implementation}
 \begin{itemize}
-\item Consider $N$ lookahead steps $k=1,\dots,N$ spaced a distance $\Delta_t$ apart
+\item Consider $N$ lookahead steps $k=1,\dots,N$ spaced $\Delta_t$ apart
 \item The control signals are $a$, the longitudinal acceleration of the car, and $\delta_f$, the steering angle of its front wheels. $u = [a\ \delta_f]$
 \item The nonlinearity is confined to the dynamics model \eqref{eq:kinematic}
 \item The cost function is quadratic in state $z$ and control $u$
 \item The state and control constraints are representable by linear inequalities
 \end{itemize}
+\vspace{-1.0em}
+\begin{figure}
+	\includegraphics[width=0.9\linewidth]{figures/mpc_figure.png}
+\end{figure}
 \end{frame}
 
 
@@ -289,7 +372,7 @@ A major issue was representing the road accurately and efficiently.
 Proposed solution: Use polygons to approximate the road at each step  $k=1,\dots,N$.
 \vspace{-0.5em}
 \begin{figure}
-\includegraphics[width=0.7\linewidth]{road_polygons.png}
+\includegraphics[width=0.7\linewidth]{figures/road_polygons.png}
 \end{figure}
 \vspace{-0.5em}
 Then the position constraint on $x_k,y_k,\ k=1,\dots,N$ is simply a set of linear inequalities.
@@ -302,7 +385,7 @@ This actually caused a lot of issues because it was difficult to generate the po
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.7\linewidth]{road_final_bounds.png}
+	\includegraphics[width=0.7\linewidth]{figures/road_final_bounds.png}
 \end{figure}
 \vspace{-0.5em}
 
@@ -310,13 +393,13 @@ This actually caused a lot of issues because it was difficult to generate the po
 
 \begin{frame}
 \frametitle{Implementation Challenges}
-Another major issue was formulating a cost function that causes the vehicle to move forward while allowing it to change its velocity.
+Another major issue was formulating a cost function that causes the vehicle to move forward without  unnecessarily penalizing changes in velocity.
 
 If we start with a speed estimate (that may not be optimal), choosing points on the road center for steps 1,...,N without introducing "noise" in the cost function is difficult.
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.6\linewidth]{centering_issue.png}
+	\includegraphics[width=0.6\linewidth]{figures/centering_issue.png}
 \end{figure}
 \vspace{-0.5em}
 
@@ -344,7 +427,7 @@ In this slide, we see the results of several test runs. The ``accuracy" and ``sp
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=1.0\linewidth]{road_paths.png}
+	\includegraphics[width=1.0\linewidth]{figures/road_paths.png}
 \end{figure}
 \vspace{-0.5em}
 
@@ -366,7 +449,7 @@ Run & 1 & 2 & 3 & 4 & 5 & 6
 As expected, the magnitude of the steering input increases to keep the vehicle closer to the road center.
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.8\linewidth]{steering_angle.png}
+	\includegraphics[width=0.8\linewidth]{figures/steering_angle.png}
 \end{figure}
 \vspace{-0.5em}
 \small
@@ -389,7 +472,7 @@ The kinematic bicycle model has only 2 parameters describing the distances betwe
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=1.0\linewidth]{road_paths_cg.png}
+	\includegraphics[width=1.0\linewidth]{figures/road_paths_cg.png}
 \end{figure}
 \vspace{-0.5em}
 
@@ -407,13 +490,44 @@ When the CG is pushed forward or back, as expected, larger control inputs are ge
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.8\linewidth]{steering_angle_cg.png}
+	\includegraphics[width=0.8\linewidth]{figures/steering_angle_cg.png}
 \end{figure}
 \vspace{-0.5em}
 
-This proof of concept shows how an MPC controller provides software reusability. A high-level autonomous system providing instructions to this optimizing controller does not have to ``know" about the change in CG.
+This proof of concept shows how the controller could improve software reusability. A high-level autonomous system providing instructions to this optimizing controller does not have to ``know" about the change in CG.
 \end{frame}
- 
+
+\begin{frame}
+\frametitle{Summary}
+\textbf{Current accomplishments:}
+\begin{itemize}
+	\item Programmed a nonlinear MPC controller for vehicle steering and longitudinal acceleration
+	\item Demonstrated ability to easily change vehicle parameters
+	\item Configurable driving behavior via weighted multiobjective cost function.
+\end{itemize}
+
+\textbf{Potential research directions:}
+\begin{itemize}
+	\item Faster and more reliable methods of solving nonlinear MPC problems.
+\begin{itemize}
+	\item Dimensional lifting for linearization?
+\end{itemize}
+\item Real-time estimation: vehicle parameters can change slowly (tire degradation, temperature change), rapidly (driving into a puddle or patch of ice) and while parked (loading/unloading heavy cargo).
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\vspace{8.0em}
+\begin{center}
+\Huge{Questions?}\normalsize
+\vspace{1.0em}
+\begin{figure}[b!]
+	\centering
+	\includegraphics[width=1.0\linewidth]{figures/end_slide.png}
+\end{figure}
+\end{center}
+\end{frame}
 	
 % Why we can succeed now?
 %\begin{frame}
