@@ -125,31 +125,34 @@ However, not all applications weight these equally.
 \end{figure}
 \end{frame}
 
-	\begin{frame}
-\frametitle{Software reusability perspective}
-Changing behavior is also a high-level goal.
-\begin{columns}
-	\begin{column}{0.65\linewidth}
-\begin{itemize}
-	\item What speed does the vehicle drive at?
-	\item What lane does it drive in?
-\end{itemize}
-	\end{column}
-\begin{column}{0.35\linewidth}
-		\begin{figure}
-	\includegraphics[width=1.0\linewidth]{figures/waymo_truck.png}
-\end{figure}
-\end{column}
-\end{columns}
-\vspace{1.0em}
-However, to plan these behaviors the autonomy software must know what its hardware is capable of.
-\begin{itemize}
-	\item If our trajectory planner is platform-independent, it can't take advantage of the full capabilities of the hardware.
-	
-	\item If our planner is hardware-dependent, it will be difficult to port the software to new vehicles.
-\end{itemize}
+% UNNECESSARY TO HAVE THIS SLIDE
+% Just talk in words about modal changes (Lall's word) such as trucks driving different from cars.
+%	\begin{frame}
+%\frametitle{Software reusability perspective}
+%Changing behavior is also a high-level goal.
+% COMMENT: Is this a digression?
+%\begin{columns}
+%	\begin{column}{0.65\linewidth}
+%\begin{itemize}
+%	\item What speed does the vehicle drive at?
+%	\item What lane does it drive in?
+%\end{itemize}
+%	\end{column}
+%\begin{column}{0.35\linewidth}
+%		\begin{figure}
+%	\includegraphics[width=1.0\linewidth]{figures/waymo_truck.png}
+%\end{figure}
+%\end{column}
+%\end{columns}
+%\vspace{1.0em}
+%However, to plan these behaviors the autonomy software must know what its hardware is capable of.
+%\begin{itemize}
+%	\item If our trajectory planner is platform-independent, it can't take advantage of the full %capabilities of the hardware.
+%	
+%	\item If our planner is hardware-dependent, it will be difficult to port the software to new %vehicles.
+%\end{itemize}
 
-\end{frame}
+%\end{frame}
 % 2.How is it solved today? What are the limits of current practice?
 
 
@@ -175,17 +178,46 @@ Challenges with trajectory tracking:
 	% 3.What is the new technical idea?
 \begin{frame}
 \frametitle{Trajectory Optimization: Beyond Waypoints?}
-Some controllers have also been developed to optimize the vehicle's trajectory: for example, by determining the best path in a safe driving corridor.
-
-High-level software could provide this safe corridor and goals (``drive at this speed", ``stop at this point"). The exact path is determined by the steering controller.
+Some controllers optimize the vehicle's trajectory: for example, by determining the best path in a safe driving corridor.
+\vspace{1em}
+\begin{columns}
+	\begin{column}{0.6\linewidth}
+High-level software could provide this safe corridor and driving goals. The exact path is determined by the steering controller.
+	\end{column}
+	\begin{column}{0.3\linewidth}
+	\includegraphics[width=1.0\linewidth]{figures/many_trajectories.png}
+\end{column}
+\end{columns}
+\vspace{1em}
 
 Some challenges with this approach:
 \begin{itemize}
-	\item The vehicle has nonlinear dynamics that add difficulty to the optimization problem.
+	\item Nonlinear dynamics add difficulty to the optimization problem.
 	\item The safe corridor the vehicle can drive in is difficult to represent.
-	\item The vehicle model must be computationally tractable.
+	\item The dynamics model must be computationally tractable.
 	\item The optimization must run in real time.
 \end{itemize}
+\end{frame}
+\begin{frame}
+\frametitle{Example Applications}
+\begin{itemize}
+	\item Dynamic maneuvers such as emergency braking / steering
+	\begin{itemize}
+		\item Requires accurate knowledge of hardware capabilities
+	\end{itemize}
+	\item Stopping at a stop sign (an interesting problem)
+	\begin{itemize}
+		\item How do we represent the constraint that the vehicle must stop at a certain position?
+		\item The velocity can change, so we don't know which time step the stop will occur at.
+	\end{itemize}
+\end{itemize}
+\begin{figure}
+	\includegraphics[width=0.6\linewidth]{figures/stop_sign.png}
+\end{figure}
+% Another thing you can add to this slide is dynamic maneuvers, e.g. emergency braking, avoidance maneuvers, where the vehicle behavior is really complicated and one needs a really complicated model to execute those correctly.
+
+% It's reasonable future self-driving cars will need this capability.
+% TODO
 \end{frame}
 
 	
@@ -208,32 +240,36 @@ Some challenges with this approach:
 \begin{frame}
 \frametitle{Proposed Division}
 High-level software generates an inexact representation of the path without much knowledge of hardware capabilities.
+% Knows basic information that informs mode changes: e.g. large delivery vehicles do not drive in the left lane, some vehicles limited to certain speed, etc.
 \begin{itemize}
 \item Provides a desired speed
 \item Provides a safe driving corridor
 \item Provides specific goals for low-level controller (stop at stop sign, hold constant speed on freeway)
 \end{itemize}
 
-Low-level controller optimizes this path.
+Vehicle-specific controller optimizes this path.
 \begin{itemize}
 \item Accounts for hardware capabilities
 \item Accounts for user preferences (comfort, fuel efficiency, etc.)
 \end{itemize}
 \vspace{-0.5em}
 \begin{figure}
-\includegraphics[width=0.9\linewidth]{figures/division.png}
+\includegraphics[width=0.8\linewidth]{figures/division.png}
 \end{figure}
 \end{frame}
+
 
 \begin{frame}
 \frametitle{MPC Trajectory Optimization}
 Model-predictive control (MPC) is a good choice for the low-level controller.
 \begin{itemize}
-\item Optimization approach: weighting different objectives is an intuitive way to adjust driving behavior.
-\item State constraints can be used to represent a safe corridor to drive in.
-\item Constraints can be used to guarantee a trajectory won't violate safety requirements.
+\item Weighting different objectives is an intuitive way to adjust driving behavior
+\item Constraints can represent an allowable corridor to drive in, guaranteeing a trajectory won't violate safety requirements.
 \item Vehicle kinematics models can be switched out without requiring major modifications to the controller.
+\item Provides an abstraction to higher levels of the autonomy stack.
 \end{itemize}
+
+% TODO Talk explicitly about things that are constraints vs weights, stop at stop sign, etc.
 
 \end{frame}
 
@@ -380,8 +416,10 @@ Then the position constraint on $x_k,y_k,\ k=1,\dots,N$ is simply a set of linea
 
 \begin{frame}
 \frametitle{Implementation Challenges}
-This actually caused a lot of issues because it was difficult to generate the polygons without unnecessarily constraining the vehicle speed. A simplification I thought of to reduce coding issues (which loses the guarantee that the vehicle will stay in a bounded region, although in practice large accelerations are penalized) is to use the right and left boundaries, but leave the rear and front open.
+This actually caused a lot of issues because it was difficult to generate the polygons without unnecessarily constraining the vehicle speed.
+% A simplification I thought of to reduce coding issues (which loses the guarantee that the vehicle will stay in a bounded region, although in practice large accelerations are penalized) is to use the right and left boundaries, but leave the rear and front open.
 
+Simplification: use the right and left boundaries, but leave the rear and front open.
 
 \vspace{-0.5em}
 \begin{figure}
@@ -395,11 +433,11 @@ This actually caused a lot of issues because it was difficult to generate the po
 \frametitle{Implementation Challenges}
 Another major issue was formulating a cost function that causes the vehicle to move forward without  unnecessarily penalizing changes in velocity.
 
-If we start with a speed estimate (that may not be optimal), choosing points on the road center for steps 1,...,N without introducing "noise" in the cost function is difficult.
+If we start with a (suboptimal) speed estimate, choosing points on the road center for steps $1,\dots,N$ without introducing ``noise" in the cost function is difficult.
 
-\vspace{-0.5em}
+
 \begin{figure}
-	\includegraphics[width=0.6\linewidth]{figures/centering_issue.png}
+	\includegraphics[width=0.55\linewidth]{figures/centering_issue.png}
 \end{figure}
 \vspace{-0.5em}
 
@@ -409,7 +447,7 @@ Solution: use previously computed trajectories to generate the center points.
 
 
 \begin{frame}
-\frametitle{Validation: Performance on ISO Lane Change}
+\frametitle{Performance on ISO Lane Change}
 The ISO double lane change path is a test performed by human drivers on a real track, but is also used in some papers on autonomous driving.
 
 The controller was implemented in Python using CasADi for symbolic math and Ipopt.
@@ -421,12 +459,13 @@ The controller was implemented in Python using CasADi for symbolic math and Ipop
 \end{frame}
 
 \begin{frame}
-\frametitle{Validation: Performance on ISO Lane Change}
+\frametitle{Performance on ISO Lane Change}
 
 In this slide, we see the results of several test runs. The ``accuracy" and ``speed" weights were successively increased: jerk and steering change weights remained the same at $100$ and $10$, respectively.
 
 \vspace{-0.5em}
 \begin{figure}
+	\centering
 	\includegraphics[width=1.0\linewidth]{figures/road_paths.png}
 \end{figure}
 \vspace{-0.5em}
@@ -444,7 +483,7 @@ Run & 1 & 2 & 3 & 4 & 5 & 6
 \end{frame}
 
 \begin{frame}
-\frametitle{Validation: Performance on ISO Lane Change}
+\frametitle{Performance on ISO Lane Change}
 
 As expected, the magnitude of the steering input increases to keep the vehicle closer to the road center.
 \vspace{-0.5em}
@@ -472,11 +511,12 @@ The kinematic bicycle model has only 2 parameters describing the distances betwe
 
 \vspace{-0.5em}
 \begin{figure}
+	\centering
 	\includegraphics[width=1.0\linewidth]{figures/road_paths_cg.png}
 \end{figure}
-\vspace{-0.5em}
 
-Changing these parameters does not destabilize the system, though we will see larger control inputs are required to keep the vehicle on the path.
+
+Changing these parameters does not destabilize the system, though larger control inputs are required to keep the vehicle on the path.
 
 All 3 runs were computed with cost:
 $$J = J_{accuracy} + 10 J_{speed} + 100J_{jerk} + 10\frac{180}{\pi} J_{steering}$$
@@ -490,7 +530,7 @@ When the CG is pushed forward or back, as expected, larger control inputs are ge
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.8\linewidth]{figures/steering_angle_cg.png}
+	\includegraphics[width=0.75\linewidth]{figures/steering_angle_cg.png}
 \end{figure}
 \vspace{-0.5em}
 
