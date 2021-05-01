@@ -159,7 +159,7 @@ However, not all applications weight these equally.
 \begin{frame}
 \frametitle{Literature review}
 
-TODO: (How to handle citations???)
+TODO: % TODO
 \end{frame}
 
 \begin{frame}
@@ -212,12 +212,12 @@ Some challenges with this approach:
 	\end{itemize}
 \end{itemize}
 \begin{figure}
-	\includegraphics[width=0.6\linewidth]{figures/stop_sign.png}
+	\includegraphics[width=0.7\linewidth]{figures/stop_sign.png}
 \end{figure}
 % Another thing you can add to this slide is dynamic maneuvers, e.g. emergency braking, avoidance maneuvers, where the vehicle behavior is really complicated and one needs a really complicated model to execute those correctly.
 
 % It's reasonable future self-driving cars will need this capability.
-% TODO
+
 \end{frame}
 
 	
@@ -266,10 +266,9 @@ Model-predictive control (MPC) is a good choice for the low-level controller.
 \item Weighting different objectives is an intuitive way to adjust driving behavior
 \item Constraints can represent an allowable corridor to drive in, guaranteeing a trajectory won't violate safety requirements.
 \item Vehicle kinematics models can be switched out without requiring major modifications to the controller.
-\item Provides an abstraction to higher levels of the autonomy stack.
+\item The controller provides an abstraction to higher levels of the autonomy stack.
 \end{itemize}
 
-% TODO Talk explicitly about things that are constraints vs weights, stop at stop sign, etc.
 
 \end{frame}
 
