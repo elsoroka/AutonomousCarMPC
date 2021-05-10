@@ -528,7 +528,7 @@ The error between the road center and vehicle path decreases with increased weig
 As expected, the magnitude of the steering input increases to keep the vehicle closer to the road center.
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.8\linewidth]{figures/steering_angle.png}
+	\includegraphics[width=0.6\linewidth]{figures/steering_angle.png}
 \end{figure}
 \vspace{-1.0em}
 
@@ -591,15 +591,26 @@ The error between the road center and vehicle path is almost unchanged.
 \begin{frame}
 \frametitle{Changing Model Parameters}
 
-When the CG is pushed forward or back, as expected, larger control inputs are generated.
+\vspace{-1.0em}
+\begin{columns}
+	\begin{column}{0.4\linewidth}
 
-\vspace{-0.5em}
+The steering angle is very similar, but the velocity has actually decreased because the vehicle is less maneuverable.
+	\end{column}
+\begin{column}{0.6\linewidth}
+
 \begin{figure}
-	\includegraphics[width=0.65\linewidth]{figures/steering_angle_cg.png}
+	\includegraphics[width=1.0\linewidth]{figures/steering_angle_cg.png}
+\end{figure}
+\end{column}
+\end{columns}
+
+\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/velocity_cg.png}
 \end{figure}
 \vspace{-0.5em}
 
-This proof of concept shows how the controller could improve software reusability. A high-level autonomous system providing instructions to this optimizing controller does not have to ``know" about the change in CG.
+Software portability: a high-level autonomous system does not have to ``know" about the change in CG.
 \end{frame}
 
 \begin{frame}
