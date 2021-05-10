@@ -78,14 +78,15 @@ The rise of autonomous driving comes with new challenges in software reusability
 
 \begin{columns}
 	\begin{column}{0.5\linewidth}
-High-level software (route planning, computer vision) is easily ported to different vehicles.
+High-level software
+%(route planning, computer vision)
+is easily ported to different vehicles.
 		% such as route planning, computer vision, and other high-level processes.
 		
 		However, low-level control depends on vehicle-specific hardware for multiple reasons.
 		\begin{itemize}
 			\item Fuel efficiency
 			%hybrid vehicle vs electric vehicle, regenerative braking.
-			\item Physical parameters
 			\item Vehicle dynamics
 			%weight, center of gravity (CG), tire size and tire-road interactions.
 			\item Engine performance
@@ -158,13 +159,35 @@ However, not all applications weight these equally.
 
 \begin{frame}
 \frametitle{Literature review}
+\begin{itemize}
 
-TODO: % TODO
+\item Driving in an allowable corridor (trajectory optimization) using inner model control (Li et al. Chinese Control Conference 2013).
+%https://searchworks.stanford.edu/articles/edseee__edseee.6640152
+% A novel path tracking controller for ackerman steering vehicles
+
+
+\item Using Bezier curves to represent roads: algorithm first generates a smooth path, then applies MPC to determine the vehicle's velocity along the path (Qian et al.  (ITSC 2016).
+
+% IEEE Conference on Intelligent Transportation Systems
+% Motion Planning for Urban Autonomous Driving using B ́ezier Curves andMPC
+% https://hal.archives-ouvertes.fr/hal-01425647/file/urbanMotionPlanningMPC_MinesParisTech_ITSC2016.pdf
+
+
+\item Switching between energy-efficient and sport mode using nonlinear MPC (Daoud et al. ICVES 2019). Assumes the vehicle drives along a known path (trajectory tracking).
+% Path-following  and  Adjustable  Driving Behavior  of  AutonomousVehicles  using  Dual-Objective  Nonlinear MPC
+% Mohamed A. Daoud1, Mostafa Osman1, Mohamed W. Mehrez1, William W. Melek
+% 2019 IEEE International Conference on Vehicular Electronics and Safety (ICVES)
+
+\item More complex MPC objectives addressing both tracking error and passenger comfort (Farag, Journal of Intelligent Transportation Systems 2020).
+% Complex-Track Following in Real-Time Using Model-BasedPredictive Control
+% https://doi.org/10.1007/s13177-020-00226-1
+
+\end{itemize}
 \end{frame}
 
 \begin{frame}
 	\frametitle{Trajectory Tracking with Waypoints}
-In trajectory tracking (as opposed to trajectory planning or optimization), the goal is to follow a given path as closely as possible. Many approaches are possible, including	PID and tracking MPC.
+Tracking controllers follow a given path as closely as possible. Many approaches are possible, including PID and tracking MPC.
 
 Challenges with trajectory tracking:
 	\begin{itemize}
@@ -207,9 +230,9 @@ Some challenges with this approach:
 	\end{itemize}
 	\item Stopping at a stop sign (an interesting problem)
 	\begin{itemize}
-		\item How do we represent the constraint that the vehicle must stop at a certain position?
-		\item The velocity can change, so we don't know which time step the stop will occur at.
+		\item Need a flexible interface so the controller can smoothly switch between objectives
 	\end{itemize}
+% Need a flexible enough interface to the controller that it can smoothly switch between objectives.
 \end{itemize}
 \begin{figure}
 	\includegraphics[width=0.7\linewidth]{figures/stop_sign.png}
@@ -239,7 +262,7 @@ Some challenges with this approach:
 
 \begin{frame}
 \frametitle{Proposed Division}
-High-level software generates an inexact representation of the path without much knowledge of hardware capabilities.
+High-level software operates without much knowledge of hardware capabilities.
 % Knows basic information that informs mode changes: e.g. large delivery vehicles do not drive in the left lane, some vehicles limited to certain speed, etc.
 \begin{itemize}
 \item Provides a desired speed
@@ -323,7 +346,7 @@ $\beta$ is the angle between the car velocity and its longitudinal axis \eqref{e
 \item The control signals are $a$, the longitudinal acceleration of the car, and $\delta_f$, the steering angle of its front wheels. $u = [a\ \delta_f]$
 \item The nonlinearity is confined to the dynamics model \eqref{eq:kinematic}
 \item The cost function is quadratic in state $z$ and control $u$
-\item The state and control constraints are representable by linear inequalities
+\item The state and control constraints are representable by linear inequalities at each step
 \end{itemize}
 \vspace{-1.0em}
 \begin{figure}
@@ -349,7 +372,7 @@ where $(x_{center,k}, y_{center,k}. \psi_{center,k}$ describe the $x-y$ position
 J_{speed} = \sum_{k=1}^N (v_k - v_{desired,k})^2
 \label{eq:speed}
 \end{equation}
-Equation \eqref{eq:costcenter} controls the accuracy of the path-following behavior, while \eqref{eq:speed} controls how closely the vehicle stays at the desired speed.
+%Equation \eqref{eq:costcenter} controls the accuracy of the path-following behavior, while \eqref{eq:speed} controls how closely the vehicle stays at the desired speed.
 \end{frame}
 
 \begin{frame}
@@ -382,13 +405,9 @@ Define the nonlinear MPC problem:
 \\
 & u_{min} \leq u_k \leq u_{max},\ k=1,\dots,N
 \\
-& \begin{bmatrix}
-v_{min}\\\psi_{min}
-\end{bmatrix} \leq \begin{bmatrix}
-v_k\\\psi_k
-\end{bmatrix}\leq \begin{bmatrix}
-v_{max}\\\psi_{max}
-\end{bmatrix},\ k=1,\dots,N
+& v_{min}\leq
+v_k\leq
+v_{max}\ k=1,\dots,N
 \\
 &
 A_k\begin{bmatrix}
@@ -397,7 +416,7 @@ x_k\\y_k\\
 \end{align}
 $A_k$ is the matrix of linear inequalities describing the road boundaries at the $k$th step.
 
-The ``min" and ``max" bounds on $u,\ v$ and $\psi$ are constant.
+The ``min" and ``max" bounds on $u$ and $v$ are constant.
 \end{frame}
 
 \begin{frame}
@@ -415,12 +434,12 @@ Then the position constraint on $x_k,y_k,\ k=1,\dots,N$ is simply a set of linea
 
 \begin{frame}
 \frametitle{Implementation Challenges}
-This actually caused a lot of issues because it was difficult to generate the polygons without unnecessarily constraining the vehicle speed.
+This caused a lot of issues because it was difficult to generate the polygons without unnecessarily constraining the vehicle speed.
 % A simplification I thought of to reduce coding issues (which loses the guarantee that the vehicle will stay in a bounded region, although in practice large accelerations are penalized) is to use the right and left boundaries, but leave the rear and front open.
 
 Simplification: use the right and left boundaries, but leave the rear and front open.
 
-\vspace{-0.5em}
+\vspace{-0.25em}
 \begin{figure}
 	\includegraphics[width=0.7\linewidth]{figures/road_final_bounds.png}
 \end{figure}
@@ -430,7 +449,7 @@ Simplification: use the right and left boundaries, but leave the rear and front 
 
 \begin{frame}
 \frametitle{Implementation Challenges}
-Another major issue was formulating a cost function that causes the vehicle to move forward without  unnecessarily penalizing changes in velocity.
+Another major issue was formulating a cost function that causes the vehicle to move forward without  unnecessarily penalizing velocity changes.
 
 If we start with a (suboptimal) speed estimate, choosing points on the road center for steps $1,\dots,N$ without introducing ``noise" in the cost function is difficult.
 
@@ -462,24 +481,46 @@ The controller was implemented in Python using CasADi for symbolic math and Ipop
 
 In this slide, we see the results of several test runs. The ``accuracy" and ``speed" weights were successively increased: jerk and steering change weights remained the same at $100$ and $10$, respectively.
 
-\vspace{-0.5em}
+
 \begin{figure}
 	\centering
 	\includegraphics[width=1.0\linewidth]{figures/road_paths.png}
 \end{figure}
 \vspace{-0.5em}
+\small
+$$J = \textcolor{red}{\alpha} J_{accuracy} + 10\textcolor{red}{\alpha} J_{speed} + 100 J_{jerk} + 10\frac{180}{\pi} J_{steering}$$
 
 \begin{table}
 	\begin{tabular}{c|cccccc}
 Run & 1 & 2 & 3 & 4 & 5 & 6
 \\\hline
- $J_{accuracy}$ & 0.01 & 0.05 & 0.1 & 1.0 & 5.0 & 10.0
-\\
- $J_{speed}$ & 0.1 & 0.5 & 1.0 & 10.0 & 50.0 & 100.0
+$\alpha$ & 0.01 & 0.05 & 0.1 & 1.0 & 5.0 & 10.0
+%\\
+ %$J_{speed}$ & 0.1 & 0.5 & 1.0 & 10.0 & 50.0 & 100.0
 \end{tabular}
 \end{table}
-
+\normalsize
 \end{frame}
+
+
+
+\begin{frame}
+\frametitle{Performance on ISO Lane Change}
+
+The error between the road center and vehicle path decreases with increased weight on $J_{accuracy}$.
+
+\vspace{-0.5em}
+\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/road_paths.png}
+\end{figure}
+\vspace{-1.5em}
+
+\begin{figure}
+	\includegraphics[width=1.0\linewidth]{figures/errors.png}
+		\caption{Error $\|x-x_{center}\|_2$}
+\end{figure}
+\end{frame}
+
 
 \begin{frame}
 \frametitle{Performance on ISO Lane Change}
@@ -489,24 +530,28 @@ As expected, the magnitude of the steering input increases to keep the vehicle c
 \begin{figure}
 	\includegraphics[width=0.8\linewidth]{figures/steering_angle.png}
 \end{figure}
-\vspace{-0.5em}
+\vspace{-1.0em}
+
 \small
+$$J = \textcolor{red}{\alpha} J_{accuracy} + 10\textcolor{red}{\alpha} J_{speed} + 100 J_{jerk} + 10\frac{180}{\pi} J_{steering}$$
+
 \begin{table}
-	\begin{tabular}{c|cccccc}
-		Run & 1 & 2 & 3 & 4 & 5 & 6
-		\\\hline
-		$J_{accuracy}$ & 0.01 & 0.05 & 0.1 & 1.0 & 5.0 & 10.0
-		\\
-		$J_{speed}$ & 0.1 & 0.5 & 1.0 & 10.0 & 50.0 & 100.0
-	\end{tabular}
+\begin{tabular}{c|cccccc}
+Run & 1 & 2 & 3 & 4 & 5 & 6
+\\\hline
+$\alpha$ & 0.01 & 0.05 & 0.1 & 1.0 & 5.0 & 10.0
+%\\
+%$J_{speed}$ & 0.1 & 0.5 & 1.0 & 10.0 & 50.0 & 100.0
+\end{tabular}
 \end{table}
 \normalsize
 \end{frame}
 
+
 \begin{frame}
 \frametitle{Changing Model Parameters}
 
-The kinematic bicycle model has only 2 parameters describing the distances between the rear/front axles and the vehicle CG.
+The kinematic bicycle model has 2 parameters: the distances between the vehicle CG and rear/front axles.
 
 \vspace{-0.5em}
 \begin{figure}
@@ -515,11 +560,32 @@ The kinematic bicycle model has only 2 parameters describing the distances betwe
 \end{figure}
 
 
-Changing these parameters does not destabilize the system, though larger control inputs are required to keep the vehicle on the path.
+Changing these parameters does not destabilize the system, though
+larger control inputs are computed.
 
 All 3 runs were computed with cost:
-$$J = J_{accuracy} + 10 J_{speed} + 100J_{jerk} + 10\frac{180}{\pi} J_{steering}$$
-which corresponds to the ``mid-range" performance seen on the previous graphs.
+$$J = 0.1J_{accuracy} + J_{speed} + 100J_{jerk} + 10\frac{180}{\pi} J_{steering}$$
+which corresponds to the ``mid-range" performance seen on previous graphs.
+\end{frame}
+
+\begin{frame}
+\frametitle{Changing Model Parameters}
+
+The error between the road center and vehicle path is almost unchanged.
+
+\vspace{-0.5em}
+\begin{figure}
+	\centering
+	\includegraphics[width=1.0\linewidth]{figures/road_paths_cg.png}
+\end{figure}
+
+
+\vspace{-1.5em}
+\begin{figure}
+	\centering
+	\includegraphics[width=1.0\linewidth]{figures/errors_cg.png}
+	\caption{Error $\|x-x_{center}\|_2$}
+\end{figure}
 \end{frame}
 
 \begin{frame}
@@ -529,7 +595,7 @@ When the CG is pushed forward or back, as expected, larger control inputs are ge
 
 \vspace{-0.5em}
 \begin{figure}
-	\includegraphics[width=0.75\linewidth]{figures/steering_angle_cg.png}
+	\includegraphics[width=0.65\linewidth]{figures/steering_angle_cg.png}
 \end{figure}
 \vspace{-0.5em}
 
@@ -545,13 +611,12 @@ This proof of concept shows how the controller could improve software reusabilit
 	\item Configurable driving behavior via weighted multiobjective cost function.
 \end{itemize}
 
-\textbf{Potential research directions:}
+\textbf{Future research directions:}
 \begin{itemize}
+	\item Determine appropriate cost function weights for modal changes (example: coming to a stop vs traveling at constant speed).
+	
 	\item Faster and more reliable methods of solving nonlinear MPC problems.
-\begin{itemize}
-	\item Dimensional lifting for linearization?
-\end{itemize}
-\item Real-time estimation: vehicle parameters can change slowly (tire degradation, temperature change), rapidly (driving into a puddle or patch of ice) and while parked (loading/unloading heavy cargo).
+\item Real-time estimation: vehicle parameters can change slowly (tire degradation, temperature change), rapidly (driving over a patch of ice) and while parked (loading/unloading cargo).
 \end{itemize}
 
 \end{frame}
@@ -595,5 +660,11 @@ This proof of concept shows how the controller could improve software reusabilit
 %\end{frame}
 
 % 5.What is the impact if successful?
+	
+	
+	% TODO: Backup slides on implementation? Prepare to answer questions on how ipopt works, how we interface
+	% direct collocation
+	% interior point algorithm
+	% interface requires second derivatives, Casadi provides these using symbolic math toolbox
 	
 \end{document}
