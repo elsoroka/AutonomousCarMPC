@@ -107,10 +107,10 @@ In this presentation, we focus on steering and acceleration control. Our goal is
 
 \begin{frame}
 \frametitle{Steering an Autonomous Vehicle}
-Major concerns when steering an autonomous vehicle:
+Important considerations:
 \begin{itemize}
 \item Safety: vehicle must not lose control or stray from a safe path.
-\item Comfort: Steer and accelerate smoothly, reducing jerk (change in acceleration).
+\item Comfort: steer and accelerate smoothly, reducing jerk (change in acceleration).
 \item Fuel efficiency: avoid unnecessary control inputs.
 \end{itemize}
 
@@ -161,12 +161,12 @@ However, not all applications weight these equally.
 \frametitle{Literature review}
 \begin{itemize}
 
-\item Driving in an allowable corridor (trajectory optimization) using inner model control (Li et al. Chinese Control Conference 2013).
+\item Driving in an allowable corridor (trajectory optimization) using inner model control, not MPC (Li et al. Chinese Control Conference 2013).
 %https://searchworks.stanford.edu/articles/edseee__edseee.6640152
 % A novel path tracking controller for ackerman steering vehicles
 
-
-\item Using Bezier curves to represent roads: algorithm first generates a smooth path, then applies MPC to determine the vehicle's velocity along the path (Qian et al.  (ITSC 2016).
+\vspace{1em}
+%\item Using Bezier curves to represent roads: algorithm first generates a smooth path, then applies MPC to determine the vehicle's velocity along the path (Qian et al.  (ITSC 2016).
 
 % IEEE Conference on Intelligent Transportation Systems
 % Motion Planning for Urban Autonomous Driving using B ́ezier Curves andMPC
@@ -177,8 +177,8 @@ However, not all applications weight these equally.
 % Path-following  and  Adjustable  Driving Behavior  of  AutonomousVehicles  using  Dual-Objective  Nonlinear MPC
 % Mohamed A. Daoud1, Mostafa Osman1, Mohamed W. Mehrez1, William W. Melek
 % 2019 IEEE International Conference on Vehicular Electronics and Safety (ICVES)
-
-\item More complex MPC objectives addressing both tracking error and passenger comfort (Farag, Journal of Intelligent Transportation Systems 2020).
+\vspace{1em}
+\item More complex MPC objective addressing both tracking error and passenger comfort (Farag, Journal of Intelligent Transportation Systems 2020).
 % Complex-Track Following in Real-Time Using Model-BasedPredictive Control
 % https://doi.org/10.1007/s13177-020-00226-1
 
@@ -560,8 +560,7 @@ The kinematic bicycle model has 2 parameters: the distances between the vehicle 
 \end{figure}
 
 
-Changing these parameters does not destabilize the system, though
-larger control inputs are computed.
+Changing these parameters did not destabilize the system.
 
 All 3 runs were computed with cost:
 $$J = 0.1J_{accuracy} + J_{speed} + 100J_{jerk} + 10\frac{180}{\pi} J_{steering}$$
