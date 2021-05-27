@@ -1,0 +1,177 @@
+@INPROCEEDINGS{softwarereuse,
+  author={G. {Smith} and R. {Smith} and A. {Wardhani}},
+  booktitle={2005 Australian Software Engineering Conference}, 
+  title={Software reuse across robotic platforms: limiting the effects of diversity}, 
+  year={2005},
+  volume={},
+  number={},
+  pages={252-261},
+  doi={10.1109/ASWEC.2005.42}}
+
+@inproceedings{softwarereuse2004,
+	author = {Hardung, Bernd and K\"{o}lzow, Thorsten and Kr\"{u}ger, Andreas},
+	title = {Reuse of Software in Distributed Embedded Automotive Systems},
+	year = {2004},
+	isbn = {1581138601},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	url = {https://doi-org.stanford.idm.oclc.org/10.1145/1017753.1017787},
+	doi = {10.1145/1017753.1017787},
+	abstract = {Until recently, in the automotive industry, reuse of software has entirely been a typical activity of suppliers. They try to reduce the increasing software development costs that stem from rising complexity and size of software in the modern automobile. Lately, also the automotive manufacturers began to develop specific software with competitive relevance. Now they have to deal with the problem of reuse, too. Nevertheless, there is a difference between the manufacturers' and the suppliers' point of view because the manufacturers have to integrate the networked hardware components to one automotive system. Therefore, the manufacturers have to deal with additional problems compared to the supplier. At the beginning of this paper, the specific problems of reuse of software in the automotive domain are shown from the perspective of automotive manufacturers. After that, a framework is proposed to deal with these problems. Moreover, the application of this framework is shown in a realistic application example.},
+	booktitle = {Proceedings of the 4th ACM International Conference on Embedded Software},
+	pages = {203–210},
+	numpages = {8},
+	keywords = {product line, automotive, architecture, reuse, software},
+	location = {Pisa, Italy},
+	series = {EMSOFT '04}
+}
+
+@article{farag,
+author={Wael {Farag}},
+year = {2020},
+date = {2020/06/12},
+title = {Complex-Track Following in Real-Time Using Model-Based Predictive Control},
+journal = {International Journal of Intelligent Transportation Systems Research},
+abstract = {In this paper, a comprehensive Model-Predictive-Control (MPC) controller that enables effective complex track maneuvering for Self-Driving Cars (SDC) is proposed. The paper presents the full design details and the implementation stages of the proposed SDC-MPC. The controller receives several input signals such as an accurate car position measurement from the localization module of the SDC measured in global map coordinates, the instantaneous vehicle speed, as well as, the reference trajectory from the path planner of the SDC. Then, the SDC-MPC generates a steering (angle) command to the SDC in addition to a throttle (speed/brake) command. The proposed cost function of the SDC-MPC (which is one of the main contributions of this paper) is very comprehensive and is composed of several terms. Each term has its own sub-objective that contributes to the overall optimization problem. The main goal is to find a solution that can satisfy the purposes of these terms according to their weights (contribution) in the combined objective (cost) function. Extensive simulation studies in complex tracks with many sharp turns have been carried out to evaluate the performance of the proposed controller at different speeds. The analysis shows that the proposed controller with its tuning technique outperforms the other classical ones like PID. The usefulness and the shortcomings of the proposed controller are also discussed in details.}
+url = {https://doi.org/10.1007/s13177-020-00226-1},
+doi = {10.1007/s13177-020-00226-1},
+}
+
+@ARTICLE{pid,  author={N. {Mohajer} and S. {Nahavandi} and H. {Abdi} and Z. {Najdovski}},  journal={IEEE Intelligent Transportation Systems Magazine},   title={Enhancing Passenger Comfort in Autonomous Vehicles Through Vehicle Handling Analysis and Optimization},   year={2020},  volume={},  number={},  pages={0-0},  doi={10.1109/MITS.2019.2953533}}
+
+@INPROCEEDINGS{ADASmiddleware,  author={O. {Djekic} and V. {Gojak} and M. {Ilic} and G. {Velikic}},  booktitle={2016 IEEE 6th International Conference on Consumer Electronics - Berlin (ICCE-Berlin)},   title={A solution to software scalability across ADAS platforms},   year={2016},  volume={},  number={},  pages={201-204},  doi={10.1109/ICCE-Berlin.2016.7684755}}
+
+@ARTICLE{ECUconsolidation,  author={M. {Milosevic} and M. Z. {Bjelica} and T. {Maruna} and N. {Teslic}},  journal={IEEE Transactions on Consumer Electronics},   title={Software Platform for Heterogeneous In-Vehicle Environments},   year={2018},  volume={64},  number={2},  pages={213-221},  doi={10.1109/TCE.2018.2844737}}
+
+@article{hammerschmidt2010bosch,
+	title={Bosch sees massive challenges ahead of automotive electronics},
+	author={Hammerschmidt, C},
+	journal={EETimes, Internet, June},
+	year={2010}
+}
+@INPROCEEDINGS{autosar,
+	author={S. {Fürst} and M. {Bechter}},	
+	booktitle={2016 46th Annual IEEE/IFIP International Conference on Dependable Systems and Networks Workshop (DSN-W)}, 
+	title={AUTOSAR for Connected and Autonomous Vehicles: The AUTOSAR Adaptive Platform}, 
+	year={2016},
+	volume={},
+	number={},
+	pages={215-217},
+	doi={10.1109/DSN-W.2016.24}
+}
+
+@Article{Casadi,
+	author = {Joel A E Andersson and Joris Gillis and Greg Horn
+	and James B Rawlings and Moritz Diehl},
+	title = {{CasADi} -- {A} software framework for nonlinear optimization
+	and optimal control},
+	journal = {Mathematical Programming Computation},
+	volume = {11},
+	number = {1},
+	pages = {1--36},
+	year = {2019},
+	publisher = {Springer},
+	doi = {10.1007/s12532-018-0139-4}
+}
+
+@Article{ipopt,
+author =  {Andreas Wächter and  Lorenz T. Biegler},
+year = {2006},
+date = {2006/03/01},
+title =  {On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming},
+journal = {Mathematical Programming},
+SP  - 25
+EP  - 57
+volume = {106},
+IS  - 1
+abstract = {We present a primal-dual interior-point algorithm with a filter line-search method for nonlinear programming. Local and global convergence properties of this method were analyzed in previous work. Here we provide a comprehensive description of the algorithm, including the feasibility restoration phase for the filter method, second-order corrections, and inertia correction of the KKT matrix. Heuristics are also considered that allow faster performance. This method has been implemented in the IPOPT code, which we demonstrate in a detailed numerical study based on 954 problems from the CUTEr test set. An evaluation is made of several line-search options, and a comparison is provided with two state-of-the-art interior-point codes for nonlinear programming.}
+url = {https://doi.org/10.1007/s10107-004-0559-y},
+doi = {10.1007/s10107-004-0559-y},
+}
+
+@article{CHEBLY201712526,
+	title = {Coupled Longitudinal and Lateral Control for an Autonomous Vehicle Dynamics Modeled Using a Robotics Formalism},
+	journal = {IFAC-PapersOnLine},
+	volume = {50},
+	number = {1},
+	pages = {12526-12532},
+	year = {2017},
+	note = {20th IFAC World Congress},
+	issn = {2405-8963},
+	doi = {https://doi.org/10.1016/j.ifacol.2017.08.2190},
+	url = {https://www.sciencedirect.com/science/article/pii/S2405896317328604},
+	author = {A. Chebly and R. Talj and A. Charara},
+	keywords = {Autonomous vehicles, coupled control, maneuvers tracking, vehicle modeling, robotics formalism, robustness},
+	abstract = {The development of autonomous and intelligent vehicles is increasing continuously in the aim to reach a reliable and secured transportation system. Indeed, autonomous navigation include three main steps: perception and localization, planning and control. This work covers essentially the study of the vehicle modeling and the vehicle control. We present a coupled control algorithm for longitudinal and lateral dynamics of an autonomous vehicle. The control is realized using Lyapunov functions and aims to ensure a robust tracking of the reference trajectory especially in coupled longitudinal and lateral maneuvers such as lane-change maneuvers, obstacle avoidance maneuvers and combined lane-keeping and steering control during critical driving situations. The control is based on the vehicle model that is carried out using the robotics formalism. This modeling approach is considered here for the accuracy it presents, since multi-body models provide more information, which are usually neglected when using a closed-form model. It considers the vehicle as a multi-body poly-articulated system and uses the modified Denavit-Hartenberg geometric description to represent the vehicle. Newton-Euler algorithm is then used to compute the direct dynamical model of the vehicle. The developed model takes into consideration all the vehicle parts and their interconnections, that renders it more representative of the vehicle behavior especially in critical driving scenarios.}
+}
+
+@INPROCEEDINGS{pathfollowingMPC,  author={M. A. {Daoud} and M. {Osman} and M. W. {Mehrez} and W. W. {Melek}},  booktitle={2019 IEEE International Conference on Vehicular Electronics and Safety (ICVES)},   title={Path-following and Adjustable Driving Behavior of Autonomous Vehicles using Dual-Objective Nonlinear MPC},   year={2019},  volume={},  number={},  pages={1-6},  doi={10.1109/ICVES.2019.8906412}}
+
+@INPROCEEDINGS{pathtracking,
+	
+	author={X. {Li} and Z. {Sun} and Q. {Chen} and J. {Wang}},
+	
+	booktitle={Proceedings of the 32nd Chinese Control Conference}, 
+	
+	title={A novel path tracking controller for ackerman steering vehicles}, 
+	
+	year={2013},
+	
+	volume={},
+	
+	number={},
+	
+	pages={4177-4182},
+	
+	doi={}}
+
+@INPROCEEDINGS{mahyuddin2012,
+	
+	author={M. N. {Mahyuddin} and J. {Na} and G. {Herrmann} and X. {Ren} and P. {Barber}},
+	
+	booktitle={Proceedings of 2012 UKACC International Conference on Control}, 
+	
+	title={An adaptive observer-based parameter estimation algorithm with application to road gradient and vehicle's mass estimation}, 
+	
+	year={2012},
+	
+	volume={},
+	
+	number={},
+	
+	pages={102-107},
+	
+	doi={10.1109/CONTROL.2012.6334614}}
+
+@article{GARATTI20091304,
+	title = {Parameter estimation in the Pacejka's tyre model through the TS method},
+	journal = {IFAC Proceedings Volumes},
+	volume = {42},
+	number = {10},
+	pages = {1304-1309},
+	year = {2009},
+	note = {15th IFAC Symposium on System Identification},
+	issn = {1474-6670},
+	doi = {https://doi.org/10.3182/20090706-3-FR-2004.00217},
+	url = {https://www.sciencedirect.com/science/article/pii/S1474667016388310},
+	author = {Simone Garatti and Sergio Bittanti},
+	keywords = {Parameter estimation, White box identification, Pacejka's tyre model},
+	abstract = {In this paper, we consider the problem of estimating unknown parameters of the so-called Pacejka's model of a tyre from measurements of the car behavior. Differently from other estimation problems, the tyre parameters may change during the car life due to tyre aging, the variability of the inflation pressure, or many further reasons. Rather then solving a single estimation problem, thus, the issue is to set-up an automatic estimator, able to to supply reliable estimates of the Pacejka's parameters for any type of tyre and any type of operating condition. Existing methods for parameter estimation have been conceived for the estimation of the value taken by the parameter in a given functioning condition, and are not suitable for the problem here considered. In this paper we present a novel approach, the TS (two-stage) approach, specifically tailored to the problem of returning accurate estimates notwithstanding the tyres changeability. We compare its performances with those achievable with other parameter estimation techniques such as Prediction Error and Kalman Filter based methods. It turns that the TS approach offers significant improvements.}
+}
+
+
+@INPROCEEDINGS{li6640152,  author={X. {Li} and Z. {Sun} and Q. {Chen} and J. {Wang}},  booktitle={Proceedings of the 32nd Chinese Control Conference},   title={A novel path tracking controller for ackerman steering vehicles},   year={2013},  volume={},  number={},  pages={4177-4182},  doi={}}
+
+@article{Korda_2018,
+	title={Linear predictors for nonlinear dynamical systems: Koopman operator meets model predictive control},
+	volume={93},
+	ISSN={0005-1098},
+	url={http://dx.doi.org/10.1016/j.automatica.2018.03.046},
+	DOI={10.1016/j.automatica.2018.03.046},
+	journal={Automatica},
+	publisher={Elsevier BV},
+	author={Korda, Milan and Mezić, Igor},
+	year={2018},
+	month={Jul},
+	pages={149–160}
+}
