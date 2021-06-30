@@ -246,6 +246,14 @@ class Roadrunner:
 		step_xy = self.advance_s(delta_s)
 		return step_xy
 
+	def find_closest(self, xy)->float:
+		seg = self.segments[self._segment_ptr]
+		pt = np.asfortranarray(
+			self.to_body_frame(np.reshape(xy,(1,2)), seg.transform_angle, seg.transform_offset))
+
+		s,_ = self.find_closest_pt(seg.curve,
+										 np.reshape(pt,(2,1)))
+		return s
 		
 	def get_width(self)->float:
 		return self.segments[self._segment_ptr].width.evaluate(self.current_pct)[1]
@@ -320,12 +328,19 @@ class Roadrunner:
 
 	def center(self, step, k:int, desired_speed:callable)->np.array:
 
-	    (xy, angle, _) = self.evaluate(step*np.sum([desired_speed(i) for i in range(k)]), full_data=True)
+		if k==0:
+			dist=0
+		else:
+			speeds = np.zeros(k); speeds[0] = desired_speed(0, self.evaluate())
+			for i in range(1, k):
+				speeds[i] = desired_speed(i, self.evaluate(step*np.sum(speeds[0:i])))
+			dist = step*np.sum(speeds)
+		(xy, angle, _) = self.evaluate(dist, full_data=True)
 
-	    center = np.empty((3,))
-	    center[0:2] = np.reshape(xy, 2)
-	    center[2]   = angle
-	    return center
+		center = np.empty((3,))
+		center[0:2] = np.reshape(xy, 2)
+		center[2]   = angle
+		return center
 
 	# Test
 
@@ -336,13 +351,20 @@ class Roadrunner:
 	    #  x1-----x4
 	    # successive bounds will overlap each other
 	    # so there is freedom to slow down or speed up the vehicle.
-	    dist = step*np.sum([desired_speed(i) for i in range(k)])
+	    speeds = np.zeros(k+21); speeds[0] = desired_speed(0, self.evaluate())
+	    for i in range(1, k+21):
+	    	speeds[i] = desired_speed(i, self.evaluate(step*np.sum(speeds[0:i])))
+	    dist = step*np.sum(speeds[0:k])
 
-	    dist_behind = dist - step*sum([desired_speed(i) for i in range(k-20,k)]) # 5 steps behind * timestep * velocity at point k
-	    #print("Looking behind by", dist_behind, dist_behind - dist)
-	    (center_minus, angle_minus, width_minus) = self.evaluate(dist_behind, full_data=True)
-	    dist_ahead = dist + step*sum([desired_speed(i) for i in range(k+1,k+21)]) # 5 steps ahead * timestep * velocity at point k
-	    #print("Looking ahead by", dist_ahead, dist_ahead - dist)
+	    back_speeds = np.zeros(21); back_speeds[-1] = speeds[0]
+	    for i in range(1,21):
+	    	back_speeds[21-i] = desired_speed(k-21-i, self.evaluate(-step*(dist-np.sum(speeds[21-i-1:]))))
+	    dist_behind = np.max([0.5, dist - step*np.sum(back_speeds)])
+	     # 5 steps behind * timestep * velocity at point k
+	    #print("Looking behind by", dist_behind - dist)
+	    (center_minus, angle_minus, width_minus) = self.evaluate(-dist_behind, full_data=True)
+	    dist_ahead = np.max([0.5, dist + step*np.sum(speeds[k+1:])]) # 5 steps ahead * timestep * velocity at point k
+	    #print("Looking ahead by", dist_ahead - dist)
 	    (center_plus, angle_plus, width_plus) = self.evaluate(dist_ahead, full_data=True)
 
 	    center_minus = np.reshape(center_minus,(2,))

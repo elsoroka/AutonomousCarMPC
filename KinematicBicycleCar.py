@@ -86,14 +86,16 @@ class KinematicBicycleCar(AbstractBaseCar):
 			for i in range(self.N+1):
 				(xy, psi, _) = roadrunner.evaluate(full_data=True)
 				# x,y
+				v_des = self.desired_speed(i, xy)
 				self.state_estimate[0:2,i] = xy
-				self.state_estimate[2,i]   = self.desired_speed(i)
+				self.state_estimate[2,i]   = v_des
 				self.state_estimate[3,i]   = psi
 				# Very bad rough estimate of acceleration
 				if i < self.N:
-					self.control_estimate[0,i] = (self.desired_speed(i+1) - self.desired_speed(i))/(2*self.step)
+					xy1 = roadrunner.evaluate(full_data=False)
+					self.control_estimate[0,i] = (self.desired_speed(i+1, xy1) - v_des)/(2*self.step)
 
-				roadrunner.advance(self.desired_speed(i)*self.step)
+				roadrunner.advance(v_des*self.step)
 
 		roadrunner.reset(**state)
 

@@ -41,6 +41,8 @@ class MpcProblem:
         self.sys  = model.getDae()
         self.cost = 0
         self.Uk_prev = None
+        self.indices_to_stop = None
+        self.indices_to_start = None
 
         # hack
 
@@ -152,12 +154,15 @@ class MpcProblem:
 
             # State at collocation points
             Xc = []
+            xy = self.roadrunner.center(self.model.step, k, self.model.desired_speed)[0:2]
             for j in range(self._d):
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
+                ub = np.reshape(self.model.upperbounds_x(k), (self.model.n,))
+                ub[2] = self.model.desired_speed(k, xy)*2.0
                 lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
-                ubw.append(np.reshape(self.model.upperbounds_x(k), (self.model.n,)))
+                ubw.append(ub)
                 w0.append(self.model.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
@@ -221,24 +226,35 @@ class MpcProblem:
             # xy_k is (x,y,angle)
             xy_k = self.roadrunner.center(self.model.step, 0, self.model.desired_speed)
             self.x_center_plot[0:-1,k] = xy_k
-            self.x_center_plot[-1,k] = self.model.desired_speed(k)
+            v_des = self.model.desired_speed(k, xy_k[0:2])
+            self.x_center_plot[-1,k] = v_des
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
             # we want to match the x-y position and road angle
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
                                      (Xk[3]-xy_k[2])**2 + \
-                                     10.0*(Xk[2] - self.model.desired_speed(k))**2)
+                                     10.0*(Xk[2] - v_des)**2)
             self.p_plot[k+1,:,:] = p
+
+            if self.indices_to_stop is not None and k >= self.indices_to_stop:
+                g.append(Xk[2])
+                lbg.append(np.zeros(1))
+                ubg.append(np.zeros(1))
+            if self.indices_to_start is not None and k < self.indices_to_start:
+                g.append(Xk[2])
+                lbg.append(np.zeros(1))
+                ubg.append(np.zeros(1))
+
+
         
         self.roadrunner.reset(**state)
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
-        cost = 0.05*self.attractive_cost + \
+        cost = 0.1*self.attractive_cost + \
                100.0*self.jerk_cost + \
                10.0*180/np.pi*self.steering_change_cost + \
-               0.0*self.steering_magnitude_cost + \
-               0.0*self.accel_magnitude_cost + \
+               5.0*self.accel_magnitude_cost + \
                1.0*J # belongs to direct_collocation,  leftover
                # from the example this code was built from and unused
             
@@ -279,7 +295,7 @@ class MpcProblem:
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
         print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])
-        self.Uk_prev = None #[self.u_opt[0,0], self.u_opt[1,0]]# we don't need this? we do.
+        self.Uk_prev = [self.u_opt[0,0], self.u_opt[1,0]]# we don't need this? we do.
 
 
         return self.x_opt, self.u_opt, solver.stats()
