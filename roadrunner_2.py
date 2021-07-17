@@ -117,14 +117,17 @@ class Roadrunner:
 		self.reset()
 
 
-	def evaluate(self, offset_xy=0.0, full_data=False):
+	def evaluate(self, offset=0.0, full_data=False, is_pct=False):
 		'''Given an offset (in meters) from self.current_position,
 		evaluate the curve at that given point.
 		The offset may be negative.
 		'''
 		# scale to percentage of curve length
 		seg = self.segments[self._segment_ptr]
-		offset_pct = offset_xy/seg.curve.length
+		if not is_pct:
+			offset_pct = offset/seg.curve.length
+		else:
+			offset_pct = offset-self.current_pct
 
 		result = None
 		state = None
@@ -288,11 +291,11 @@ class Roadrunner:
 		min_idx = 0
 		for idx, x_i in enumerate(x):
 			xy = curve.evaluate(x_i)
-			dist = np.sqrt((xy[0]-match_pt[0])**2 + (xy[1]-match_pt[1])**2)
+			dist = np.linalg.norm(xy-match_pt, 2)#np.sqrt((xy[0]-match_pt[0])**2 + (xy[1]-match_pt[1])**2)
 			if dist < min_dist:
 				min_dist = dist
 				min_idx = idx
-		return min_idx, dist
+		return min_idx, min_dist
 
 	@staticmethod
 	def find_closest_pt(curve, match_pt:np.array, runs=4, start=0.0, end=1.0)->(float, float):
