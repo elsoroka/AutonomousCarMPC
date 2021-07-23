@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 
 class MpcProblem:
 
-    def __init__(self, model, roadrunner): # casadi symbolic objective
+    def __init__(self, model, roadrunner, weights:dict): # casadi symbolic objective
 
         self.model = model
         self.roadrunner = roadrunner
@@ -43,6 +43,7 @@ class MpcProblem:
         self.Uk_prev = None
         self.indices_to_stop = None
         self.indices_to_start = None
+        self.weights = weights
 
         # hack
 
@@ -251,11 +252,11 @@ class MpcProblem:
         self.roadrunner.reset(**state)
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
-        cost = 0.1*self.attractive_cost + \
-               100.0*self.jerk_cost + \
-               10.0*180/np.pi*self.steering_change_cost + \
-               5.0*self.accel_magnitude_cost + \
-               1.0*J # belongs to direct_collocation,  leftover
+        cost = self.weights["accuracy"]*self.attractive_cost + \
+               self.weights["jerk"]*self.jerk_cost + \
+               self.weights["steering change"]*180.0/np.pi*self.steering_change_cost + \
+               self.weights["acceleration"]*self.accel_magnitude_cost# + \
+               # 1.0*J # belongs to direct_collocation,  leftover
                # from the example this code was built from and unused
             
 

@@ -138,7 +138,7 @@ class Roadrunner:
 		   (np.sign(offset_pct) == -1 and -offset_pct >= self.current_pct - seg.start_pct):
 		   state = self.save_state()
 		   # advance() takes care of moving the segment_ptr and current_pct
-		   self.advance(offset_xy)
+		   self.advance(offset_pct*seg.curve.length)
 
 		   # we've advanced to the correct place, now offset is 0.0
 		   offset_xy = 0.0; offset_pct = 0.0
