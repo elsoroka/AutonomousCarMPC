@@ -87,23 +87,23 @@ class MpcProblem:
 
     def bound_x(self, xc, yc, phi, dl, dr):
         # left bound by 2 points
-        pl1 = np.array([xc + dl*np.cos(phi + np.pi/2.0),
+        pl = np.array([xc + dl*np.cos(phi + np.pi/2.0),
                        yc + dl*np.sin(phi + np.pi/2.0)])
-        pl2 = np.array([pl1[0]+np.cos(phi),
-                        pl1[1]+np.sin(phi)])
-        slopel = (pl2[1]-pl1[1])/(pl2[0]-pl1[0]); slopel = np.clip(slopel, -1e4, 1e4)
-        offsetl = pl1[1] - pl1[0]*slopel
+        pl1 = pl - dl*np.array([np.cos(phi), np.sin(phi)])
+        pl2 = pl + dl*np.array([np.cos(phi), np.sin(phi)])
+        slopel = (pl2[1]-pl[1])/(pl2[0]-pl[0]); slopel = 1e4 if np.isinf(slopel) else slopel
+        offsetl = pl[1] - pl[0]*slopel
 
         # right bound
-        pr1 = np.array([xc - dr*np.cos(phi + np.pi/2.0),
+        pr = np.array([xc - dr*np.cos(phi + np.pi/2.0),
                        yc - dr*np.sin(phi + np.pi/2.0)])
-        pr2 = np.array([pr1[0]+np.cos(phi),
-                        pr1[1]+np.sin(phi)])
-        sloper = (pr2[1]-pr1[1])/(pr2[0]-pr1[0]); sloper = np.clip(sloper, -1e4, 1e4)
-        offsetr = pr1[1] - pr1[0]*sloper
+        pr1 = pr - dr*np.array([np.cos(phi), np.sin(phi)])
+        pr2 = pr + dr*np.array([np.cos(phi), np.sin(phi)])
+        sloper = (pr2[1]-pr[1])/(pr2[0]-pr[0]); sloper = 1e4 if np.isinf(sloper) else sloper
+        offsetr = pr[1] - pr[0]*sloper
 
         slopes = [(slopel, pl1, pl2), (sloper, pr1, pr2)]
-        
+    
         bounds = []
         # xc, yc should definitely be a feasible point
         
@@ -121,8 +121,8 @@ class MpcProblem:
                             xc*slope + yc*(-1.0) + offset <= 0.0:
                 bounds.append(np.array([0.0, slope, -1.0, offset, -np.inf]))
             else:
-                raise ValueError("HUGE ERROR at a, b, c =", slope, -1.0, offset, "\ncenter", center_x, center_y)
-        return bounds
+                raise ValueError("HUGE ERROR at a, b, c =", slope, -1.0, offset, "\ncenter", xc, yc)
+        return bounds, np.vstack([pl1, pl2, pr2, pr1])
 
 
 
@@ -167,7 +167,7 @@ class MpcProblem:
                         ['x', 'u'],['xdot', 'L'])
 
         # for plotting
-        bounds = self.bound_x(estimated_path[0,0], estimated_path[1,0], estimated_path[3,0], left_widths[0], right_widths[0])
+        bounds, _ = self.bound_x(estimated_path[0,0], estimated_path[1,0], estimated_path[3,0], left_widths[0], right_widths[0])
 
         # Formulate the NLP
         for k in range(self.model.N):
@@ -203,8 +203,8 @@ class MpcProblem:
                 w0.append(self.model.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
-                bounds = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
-
+                bounds, _ = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
+                '''
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
                     lbg.append(np.reshape(lb,(1,)))
@@ -212,7 +212,7 @@ class MpcProblem:
                         g.append(Xkj[0]*a + Xkj[1]*b + c)
                     else:
                         g.append(Xkj[1]*b + c)
-                
+                '''
 
             # Loop over collocation points
             Xk_end = self._D[0]*Xk
@@ -243,13 +243,13 @@ class MpcProblem:
             x_plot.append(Xk)
 
             # Add the polygonal bounds at step k+1
-            bounds = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
-                
+            bounds, _ = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
+            '''
             for (ub, a, b, c, lb) in bounds:
                 ubg.append(np.reshape(ub,(1,)))
                 lbg.append(np.reshape(lb,(1,)))
                 g.append(Xk[0]*a + Xk[1]*b + c)
-                
+            ''' 
 
             # Add equality constraint
             g.append(Xk_end-Xk)

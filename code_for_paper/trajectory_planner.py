@@ -36,6 +36,9 @@ class TrajectoryPlanner():
 			# Construct the MPC problem
 			estimated_path, left_widths, right_widths = self.generate_path_estimate(driveable_corridor, desired_speed, constraint_generator)
 			problem = self.build_mpc_problem(estimated_path, left_widths, right_widths, weights)
+			_,p = self.mpcprob.bound_x(estimated_path[0,r], estimated_path[1,r], estimated_path[3,r], left_widths[r], right_widths[r])
+			self.polygon_boundaries[:,:,r] = p
+
 			# Compute the trajectory z and control u
 			z, u, info  = self.solve_mpc_problem(problem)
 			# Move forward one timestep
@@ -59,6 +62,7 @@ class TrajectoryPlanner():
 			z_estimate[:,k] = np.array([x_k, y_k, v_k, psi_k])
 			dl[k] = dl_k
 			dr[k] = dr_k
+		dl[0] = dl[1]; dr[0] = dr[1]
 		return z_estimate, dl, dr
 
 	def initialize_first_mpc_problem(self, estimated_path):
@@ -99,4 +103,4 @@ class TrajectoryPlanner():
 		self.x_true = np.empty((self.mpcprob.model.n,n_runs+2)) # store the state as simulated for each control input by an integrator
 		self.centers = np.zeros((4,n_runs+2)) # store the state as simulated for each control input by an integrator
 		# store the polygon boundary for each step, so we can plot them later
-		#self.polygon_boundaries = np.zeros((n_runs+self.N,4,2))
+		self.polygon_boundaries = np.zeros((n_runs+self.N,4,2))
