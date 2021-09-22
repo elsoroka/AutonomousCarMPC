@@ -36,13 +36,16 @@ class TrajectoryPlanner():
 			# Construct the MPC problem
 			estimated_path, left_widths, right_widths = self.generate_path_estimate(driveable_corridor, desired_speed, constraint_generator)
 			problem = self.build_mpc_problem(estimated_path, left_widths, right_widths, weights)
+
+			# save data
 			_,p = self.mpcprob.bound_x(estimated_path[0,r], estimated_path[1,r], estimated_path[3,r], left_widths[r], right_widths[r])
 			self.polygon_boundaries[:,:,r] = p
 
 			# Compute the trajectory z and control u
 			z, u, info  = self.solve_mpc_problem(problem)
+			u0 = np.array([u[0][0], u[1][0]])
 			# Move forward one timestep
-			self.z0 = self.apply_control(u[0])
+			self.z0 = self.apply_control(u0)
 			# Initialize the next problem with the result of the previous
 			self.initialize_nth_mpc_problem(z, u)
 
@@ -78,7 +81,7 @@ class TrajectoryPlanner():
 			estimated_control[0,i] = (estimated_path[2,i+1]-estimated_path[2,i])/self.step
 			estimated_control[1,i] = (estimated_path[3,i+1]-estimated_path[3,i])/self.step
 
-		self.mpcprob.model.set_initial(estimated_path, estimated_control)
+		#self.mpcprob.model.set_initial(estimated_path, estimated_control)
 
 	def initialize_nth_mpc_problem(self, z, u):
 		self.mpcprob.model.set_state_estimate(z)

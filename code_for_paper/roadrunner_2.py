@@ -334,9 +334,11 @@ class Roadrunner:
 		if k==0:
 			dist=0
 		else:
-			speeds = np.zeros(k); speeds[0] = desired_speed(0, self.evaluate())
+			xy = self.evaluate()
+			speeds = np.zeros(k); speeds[0] = desired_speed(0, xy[0,0],xy[0,1])
 			for i in range(1, k):
-				speeds[i] = desired_speed(i, self.evaluate(step*np.sum(speeds[0:i])))
+				xy1 = self.evaluate(step*np.sum(speeds[0:i]))
+				speeds[i] = desired_speed(i, xy1[0,0],xy1[0,1])
 			dist = step*np.sum(speeds)
 		(xy, angle, _) = self.evaluate(dist, full_data=True)
 
@@ -354,14 +356,17 @@ class Roadrunner:
 	    #  x1-----x4
 	    # successive bounds will overlap each other
 	    # so there is freedom to slow down or speed up the vehicle.
-	    speeds = np.zeros(k+21); speeds[0] = desired_speed(0, self.evaluate())
+	    xy = self.evaluate()
+	    speeds = np.zeros(k+21); speeds[0] = desired_speed(0, xy[0,0],xy[0,1])
 	    for i in range(1, k+21):
-	    	speeds[i] = desired_speed(i, self.evaluate(step*np.sum(speeds[0:i])))
+	    	xy = self.evaluate(step*np.sum(speeds[0:i]))
+	    	speeds[i] = desired_speed(i, xy[0,0], xy[0,1])
 	    dist = step*np.sum(speeds[0:k])
 
 	    back_speeds = np.zeros(21); back_speeds[-1] = speeds[0]
 	    for i in range(1,21):
-	    	back_speeds[21-i] = desired_speed(k-21-i, self.evaluate(-step*(dist-np.sum(speeds[21-i-1:]))))
+	    	xy = self.evaluate(-step*(dist-np.sum(speeds[21-i-1:])))
+	    	back_speeds[21-i] = desired_speed(k-21-i, xy[0,0], xy[0,1])
 	    dist_behind = np.max([0.5, dist - step*np.sum(back_speeds)])
 	     # 5 steps behind * timestep * velocity at point k
 	    #print("Looking behind by", dist_behind - dist)
