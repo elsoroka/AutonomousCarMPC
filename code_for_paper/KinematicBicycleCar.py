@@ -72,32 +72,15 @@ class KinematicBicycleCar(AbstractBaseCar):
 		return self.dae
 
 	# Specify initial conditions
-	def set_initial(self, ic, desired_speed:callable, roadrunner):
+	def set_initial(self, state_estimate, control_estimate):
 		# For SOME REASON this doesn't work.
 		# self.dae.setStart(self.dae.x[0], ic, False)
 		#for i in range(4):
 		#	self.dae.set_start(self.dae.x[0][i:i+1], ic[i])
 		
-		state = roadrunner.save_state()
-		self.desired_speed = desired_speed
-
-		if self.state_estimate is None:
-			self.state_estimate = np.empty((self.n,self.N+1))
-			for i in range(self.N+1):
-				(xy, psi, _) = roadrunner.evaluate(full_data=True)
-				# x,y
-				v_des = self.desired_speed(i, xy)
-				self.state_estimate[0:2,i] = xy
-				self.state_estimate[2,i]   = v_des
-				self.state_estimate[3,i]   = psi
-				roadrunner.advance(v_des*self.step)
-				# Very bad rough estimate of acceleration
-				if i < self.N:
-					xy1 = roadrunner.evaluate(full_data=False)
-					self.control_estimate[0,i] = (self.desired_speed(i+1, xy1) - v_des)/(self.step)
-
-
-		roadrunner.reset(**state)
+		self.state_estimate = state_estimate
+		self.control_estimate = control_estimate
+		
 
 
 	def set_fixed_point(self, k:int, fixed_upper:np.array, fixed_lower:np.array)->None:

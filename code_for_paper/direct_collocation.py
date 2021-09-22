@@ -31,24 +31,22 @@
 import casadi as ca
 import numpy  as np
 import matplotlib.pyplot as plt
+from KinematicBicycleCar import KinematicBicycleCar
 
 class MpcProblem:
 
-    def __init__(self, model, roadrunner, weights:dict): # casadi symbolic objective
+    def __init__(self, params):
 
-        self.model = model
-        self.roadrunner = roadrunner
-        self.sys  = model.getDae()
+        self.model = KinematicBicycleCar(N=params["N"], step=params["step"])
+        self.sys  = self.model.getDae()
         self.cost = 0
         self.Uk_prev = None
         self.indices_to_stop = None
         self.indices_to_start = None
-        self.weights = weights
-
         # hack
 
-        params = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
-        self.sim = ca.integrator('F', 'idas', params, {'t0':0, 'tf':model.step})
+        simparams = {'x':self.sys.x[0], 'p':self.sys.u[0], 'ode':self.sys.ode[0]}
+        self.sim = ca.integrator('F', 'idas', simparams, {'t0':0, 'tf':self.model.step})
 
         # Set up collocation (from direct_collocation example)
 
@@ -87,8 +85,49 @@ class MpcProblem:
             pint = np.polyint(p)
             self._B[j] = pint(1.0)
 
+    def bound_x(self, xc, yc, phi, dl, dr):
+        # left bound by 2 points
+        pl1 = np.array([xc + dl*np.cos(phi + np.pi/2.0),
+                       yc + dl*np.sin(phi + np.pi/2.0)])
+        pl2 = np.array([pl1[0]+np.cos(phi),
+                        pl1[1]+np.sin(phi)])
+        slopel = (pl2[1]-pl1[1])/(pl2[0]-pl1[0]); slopel = np.clip(slopel, -1e4, 1e4)
+        offsetl = pl1[1] - pl1[0]*slopel
 
-    def run(self, ic:np.array):
+        # right bound
+        pr1 = np.array([xc - dr*np.cos(phi + np.pi/2.0),
+                       yc - dr*np.sin(phi + np.pi/2.0)])
+        pr2 = np.array([pr1[0]+np.cos(phi),
+                        pr1[1]+np.sin(phi)])
+        sloper = (pr2[1]-pr1[1])/(pr2[0]-pr1[0]); sloper = np.clip(sloper, -1e4, 1e4)
+        offsetr = pr1[1] - pr1[0]*sloper
+
+        slopes = [(slopel, pl1, pl2), (sloper, pr1, pr2)]
+        
+        bounds = []
+        # xc, yc should definitely be a feasible point
+        
+        for (slope, p, q) in slopes:
+            offset = p[1]-p[0]*slope
+            
+            # We determine whether it is an upper or lower bound
+            # by making sure center x,y is a feasible point
+            
+            if 0.0 <= xc*slope + yc*(-1.0) + offset and \
+                      xc*slope + yc*(-1.0) + offset <= np.inf:
+                bounds.append(np.array([np.inf, slope, -1.0, offset, 0.0]))
+                
+            elif -np.inf <= xc*slope + yc*(-1.0) + offset and \
+                            xc*slope + yc*(-1.0) + offset <= 0.0:
+                bounds.append(np.array([0.0, slope, -1.0, offset, -np.inf]))
+            else:
+                raise ValueError("HUGE ERROR at a, b, c =", slope, -1.0, offset, "\ncenter", center_x, center_y)
+        return bounds
+
+
+
+    def build_problem(self, ic:np.array, estimated_path:np.array, left_widths:np.array, right_widths:np.array, weights:dict):
+        self.weights = weights
         self.ic = np.reshape(ic, (self.model.n,))
         # Start with an empty NLP
         w   = [] # state
@@ -105,7 +144,6 @@ class MpcProblem:
         x_plot = []
         u_plot = []
         self.x_center_plot = np.empty((self.model.n, self.model.N))
-        self.p_plot = np.empty((self.model.N+1, self.model.n, 2))
 
         # "Lift" initial conditions
         Xk = ca.MX.sym('z0', self.model.n)
@@ -129,10 +167,8 @@ class MpcProblem:
                         ['x', 'u'],['xdot', 'L'])
 
         # for plotting
-        bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
-        self.p_plot[0,:,:] = p
+        bounds = self.bound_x(estimated_path[0,0], estimated_path[1,0], estimated_path[3,0], left_widths[0], right_widths[0])
 
-        state = self.roadrunner.save_state()
         # Formulate the NLP
         for k in range(self.model.N):
             # New NLP variable for the control
@@ -155,19 +191,19 @@ class MpcProblem:
 
             # State at collocation points
             Xc = []
-            xy = self.roadrunner.center(self.model.step, k, self.model.desired_speed)[0:2]
+            xy = estimated_path[0:2,k]
             for j in range(self._d):
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
                 w.append(Xkj)
                 ub = np.reshape(self.model.upperbounds_x(k), (self.model.n,))
-                ub[2] = self.model.desired_speed(k, xy)*2.0
+                ub[2] = estimated_path[2,k]*2.0 # limit to 2x desired speed
                 lbw.append(np.reshape(self.model.lowerbounds_x(k), (self.model.n,)))
                 ubw.append(ub)
                 w0.append(self.model.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
-                bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
+                bounds = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
 
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
@@ -206,10 +242,8 @@ class MpcProblem:
             w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
 
-            self.roadrunner.advance_xy(self.model.state_estimate[:,k+1][0:2])
-
             # Add the polygonal bounds at step k+1
-            bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
+            bounds = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
                 
             for (ub, a, b, c, lb) in bounds:
                 ubg.append(np.reshape(ub,(1,)))
@@ -225,18 +259,18 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
-            xy_k = self.roadrunner.center(self.model.step, 0, self.model.desired_speed)
-            self.x_center_plot[0:-1,k] = xy_k
-            v_des = self.model.desired_speed(k, xy_k[0:2])
+            xy_k = estimated_path[0:2,k+1]
+            v_des = estimated_path[2,k]
+            phi_k = estimated_path[3,k+1]
+            self.x_center_plot[0:2,k] = xy_k
             self.x_center_plot[-1,k] = v_des
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
             # we want to match the x-y position and road angle
             self.attractive_cost += ((Xk[0]-xy_k[0])**2 + \
                                      (Xk[1]-xy_k[1])**2 + \
-                                     (Xk[3]-xy_k[2])**2 + \
-                                     10.0*(Xk[2] - v_des)**2)
-            self.p_plot[k+1,:,:] = p
+                                     10*(Xk[2] - v_des)**2 + \
+                                     (Xk[3]-phi_k)**2)
 
             if self.indices_to_stop is not None and k >= self.indices_to_stop:
                 g.append(Xk[2])
@@ -248,8 +282,6 @@ class MpcProblem:
                 ubg.append(np.zeros(1))
 
 
-        
-        self.roadrunner.reset(**state)
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
         cost = self.weights["accuracy"]*self.attractive_cost + \
@@ -277,22 +309,27 @@ class MpcProblem:
         lbg = np.concatenate(lbg) # yikes
         ubg = np.concatenate(ubg)
 
-        # Create an NLP solver
+        # this is the format ipopt wants
         prob = {'f': cost, 'x': w, 'g': g}
+        bounds = {'x0':w0, 'lbx':lbw, 'ubx':ubw, 'lbg':lbg, 'ubg':ubg}
+        problem = (prob, bounds, w, x_plot, u_plot)
+        return problem
+
+    def solve(self, problem):
+        prob, bounds, w, x_plot, u_plot = problem
+        # Create an NLP solver
         solver = ca.nlpsol('solver', 'ipopt', prob, {'verbose':False});
 
         # Function to get x and u trajectories from w
         trajectories = ca.Function('trajectories', [w], [x_plot, u_plot], ['w'], ['x', 'u'])
 
         # Solve the NLP
-        sol = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg)
+        #sol = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg)
+        sol = solver(**bounds)
         x_opt, u_opt = trajectories(sol['x'])
         self.x_opt = x_opt.full() # to numpy array
         self.u_opt = u_opt.full() # to numpy array
 
-        # Feed the previous state back to the model
-        self.model.set_state_estimate(self.x_opt)
-        self.model.set_control_estimate(self.u_opt)
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
         print("u_opt", [self.u_opt[0,0], self.u_opt[1,0]])
