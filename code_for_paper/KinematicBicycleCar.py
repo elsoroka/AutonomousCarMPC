@@ -84,7 +84,7 @@ class KinematicBicycleCar(AbstractBaseCar):
 		if self.state_estimate is None:
 			self.state_estimate = np.empty((self.n,self.N+1))
 			for i in range(self.N+1):
-				(xy, psi, _) = roadrunner.evaluate(full_data=True)
+				(xy, psi, _, _) = roadrunner.evaluate(full_data=True)
 				# x,y
 				v_des = self.desired_speed(i, xy[0,0], xy[0,1])
 				self.state_estimate[0:2,i] = xy

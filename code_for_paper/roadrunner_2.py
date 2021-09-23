@@ -35,14 +35,14 @@ from   collections       import namedtuple
 # a start_pct and end_pct (governs when to start and stop using this curve)
 # and the x-y point and angle that transform
 # the x-y results of curve.evaluate() from body frame to world frame.
-Segment = namedtuple('Segment', ['curve', 'width', 'start_pct', 'end_pct', 'transform_angle', 'transform_offset'])
+Segment = namedtuple('Segment', ['curve', 'left_width', 'right_width', 'start_pct', 'end_pct', 'transform_angle', 'transform_offset'])
 
 class OutOfRoadPointsException(Exception):
 	pass
 
 class Roadrunner:
 
-	def __init__(self, road_center:np.array, road_width:np.array,
+	def __init__(self, road_center:np.array, left_width:np.array, right_width:np.array,
 		P=20, start_pct = 0.3, end_pct = 0.7):
 
 		self.P = P # Number of points to fit at one time
@@ -57,11 +57,13 @@ class Roadrunner:
 		# TODO: check proper sizes of road_center (n_points x 2) and width (n_points x 1)
 		self.road_center = road_center
 		n_points,_       = np.shape(road_center)
-		self.road_width  = road_width
+		self.left_width  = left_width
+		self.right_width  = right_width
 		
 		# Fit segments to the road points
-		self.segments = []
-		self.widths   = []
+		self.segments     = []
+		self.left_widths  = []
+		self.right_widths = []
 		i = 0
 		# so if P = 20 and end_pct = 60%, we get 12.
 		end_idx   = int(P*self.end_pct)
@@ -86,8 +88,11 @@ class Roadrunner:
 				tmp = Roadrunner.find_closest_pt(curve, np.reshape(road_body_frame[j],(2,1)), runs=4, start=0,end=1)
 				distances[j] = tmp[0]
 
-			curve_width = bezier.Curve.from_nodes(np.asfortranarray( \
-					np.vstack([distances, road_width[i:i+P]])
+			curve_left_width  = bezier.Curve.from_nodes(np.asfortranarray( \
+					np.vstack([distances, left_width[i:i+P]])
+				))
+			curve_right_width = bezier.Curve.from_nodes(np.asfortranarray( \
+					np.vstack([distances, right_width[i:i+P]])
 				))
 			
 			# Now we have a start_pct and end_pct (default: 0.3 to 0.7)
@@ -103,7 +108,8 @@ class Roadrunner:
 			start_pct,_ = Roadrunner.find_closest_pt(curve, np.reshape(start_xy,(2,1)), runs=4, start=0,end=0.5)
 			end_pct,_   = Roadrunner.find_closest_pt(curve, np.reshape(end_xy,  (2,1)), runs=4, start=0.5,end=1)
 			self.segments.append(Segment(curve     = curve,
-										 width     = curve_width,
+										 left_width  = curve_left_width,
+										 right_width = curve_right_width,
 										 start_pct = start_pct,
 										 end_pct   = end_pct,
 										 transform_angle  = angle,
@@ -150,7 +156,7 @@ class Roadrunner:
 									 angle  = seg.transform_angle,
 								     offset = seg.transform_offset)
 		if full_data:
-			result = (result, self.get_angle(), self.get_width())
+			result = (result, self.get_angle(), self.get_left_width(), self.get_right_width())
 
 		# restore current state
 		if state is not None:
@@ -258,16 +264,18 @@ class Roadrunner:
 										 np.reshape(pt,(2,1)))
 		return s
 		
-	def get_width(self)->float:
-		return self.segments[self._segment_ptr].width.evaluate(self.current_pct)[1]
+	def get_left_width(self)->float:
+		return self.segments[self._segment_ptr].left_width.evaluate(self.current_pct)[1]
 		
-	
+	def get_right_width(self)->float:
+		return self.segments[self._segment_ptr].right_width.evaluate(self.current_pct)[1]
+
 	def get_angle(self)->float:
 		# Evaluate the tangent vector to the curve at our current point
 		curve = self.segments[self._segment_ptr].curve
 		tangent_vector = curve.evaluate_hodograph(self.current_pct)
 		# Now we can get a precise angle
-		return np.arctan2(tangent_vector[1], tangent_vector[0]) + self.segments[self._segment_ptr].transform_angle
+		return float(np.arctan2(tangent_vector[1], tangent_vector[0]) + self.segments[self._segment_ptr].transform_angle)
 
 
 	def reset(self, segment_ptr=0, dist_traveled_xy=0.0, current_pct_offset=0.0)->None:

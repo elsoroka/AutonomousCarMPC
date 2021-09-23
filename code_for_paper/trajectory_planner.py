@@ -70,6 +70,29 @@ class TrajectoryPlanner():
 		dl[0] = dl[1]; dr[0] = dr[1]
 		return z_estimate, dl, dr
 
+	def generate_first_estimate(self, ic, driveable_corridor, desired_speed, constraint_generator):
+
+		state_estimate = np.zeros((self.n,self.N+1))
+		control_estimate = np.zeros((self.m,self.N))
+		self.z0 = ic
+		s = 0
+		for i in range(self.N+1):
+			(x, y, psi, _, _) = driveable_corridor(self.z0[0], self.z0[1], s)
+			# x,y
+			v_des = desired_speed(i, x, y)
+			state_estimate[0, i] = x
+			state_estimate[1,i] = y
+			state_estimate[2,i]   = v_des
+			state_estimate[3,i]   = psi
+			s += v_des*self.step
+		
+			# Very bad rough estimate of acceleration
+			if i < self.N:
+				x, y, psi, _, _ = driveable_corridor(self.z0[0], self.z0[1], s)
+				control_estimate[0,i] = (desired_speed(x, y, i+1) - v_des)/(self.step)
+
+		return state_estimate, control_estimate
+
 	def initialize_first_mpc_problem(self, estimated_path):
 		# save the data
 		self.z0 = estimated_path[:,0] # initial condition
