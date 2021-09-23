@@ -206,7 +206,7 @@ class MpcProblem:
                 w0.append(self.model.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
-                bounds, _ = self.bound_x(self.model.state_estimate[0,k], self.model.state_estimate[1,k], self.model.state_estimate[3,k], left_widths[k], right_widths[k])
+                bounds, _ = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
                 #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
                 
                 for (ub, a, b, c, lb) in bounds:
@@ -245,10 +245,10 @@ class MpcProblem:
     
             w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
-            self.roadrunner.advance_xy(self.model.state_estimate[:,k+1][0:2])
+            #self.roadrunner.advance_xy(self.model.state_estimate[:,k+1][0:2])
 
             # Add the polygonal bounds at step k+1
-            bounds, _ = self.bound_x(self.model.state_estimate[0,k+1], self.model.state_estimate[1,k+1], self.model.state_estimate[3,k+1], left_widths[k+1], right_widths[k+1])
+            bounds, _ = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
             #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)            
 
             for (ub, a, b, c, lb) in bounds:
@@ -265,9 +265,9 @@ class MpcProblem:
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
-            xy_k = self.model.state_estimate[0:2,k+1]
-            v_des = self.model.state_estimate[2,k]
-            phi_k = self.model.state_estimate[3,k+1]
+            xy_k = estimated_path[0:2,k+1]
+            v_des = estimated_path[2,k]
+            phi_k = estimated_path[3,k+1]
             #xy_k = self.roadrunner.center(self.model.step, 0, self.model.desired_speed)
             #v_des = self.model.desired_speed(k, xy_k[0], xy_k[1])
             self.x_center_plot[0:2,k] = xy_k

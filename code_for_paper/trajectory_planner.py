@@ -60,7 +60,9 @@ class TrajectoryPlanner():
 		z_estimate[:,0] = self.z0
 		dl, dr = np.zeros(self.N+1), np.zeros(self.N+1)
 		for k in range(1, self.N+1):
-			x_k, y_k, psi_k, dl_k, dr_k = driveable_corridor(z_estimate[0,k-1], z_estimate[1,k-1], self.mpcprob.model.step*z_estimate[2,k-1])
+			x_k, y_k, psi_k, dl_k, dr_k = driveable_corridor(self.mpcprob.model.state_estimate[0,k-1], \
+				                                             self.mpcprob.model.state_estimate[1,k-1], \
+				                                             self.mpcprob.model.step*self.mpcprob.model.state_estimate[2,k-1])
 			v_k = desired_speed(x_k, y_k, k)
 			z_estimate[:,k] = np.array([x_k, y_k, v_k, psi_k])
 			dl[k] = dl_k
@@ -84,8 +86,9 @@ class TrajectoryPlanner():
 		#self.mpcprob.model.set_initial(estimated_path, estimated_control)
 
 	def initialize_nth_mpc_problem(self, z, u):
-		self.mpcprob.model.set_state_estimate(z)
-		self.mpcprob.model.set_control_estimate(u)
+		pass
+		#self.mpcprob.model.set_state_estimate(z)
+		#self.mpcprob.model.set_control_estimate(u)
 
 	def build_mpc_problem(self, estimated_path, left_widths, right_widths, weights):
 		problem = self.mpcprob.build_problem(self.z0, estimated_path, left_widths, right_widths, weights)
