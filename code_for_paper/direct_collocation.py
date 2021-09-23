@@ -87,23 +87,23 @@ class MpcProblem:
 
     def bound_x(self, xc, yc, phi, dl, dr):
         # left bound by 2 points
-        pl1 = np.array([xc + dl*np.cos(phi + np.pi/2.0),
+        pl = np.array([xc + dl*np.cos(phi + np.pi/2.0),
                        yc + dl*np.sin(phi + np.pi/2.0)])
-        pl2 = np.array([pl1[0]+np.cos(phi),
-                        pl1[1]+np.sin(phi)])
-        slopel = (pl2[1]-pl1[1])/(pl2[0]-pl1[0]); slopel = np.clip(slopel, -1e4, 1e4)
-        offsetl = pl1[1] - pl1[0]*slopel
+        pl1 = pl - dl*np.array([np.cos(phi), np.sin(phi)])
+        pl2 = pl + dl*np.array([np.cos(phi), np.sin(phi)])
+        slopel = (pl2[1]-pl[1])/(pl2[0]-pl[0]); slopel = 1e4 if np.isinf(slopel) else slopel
+        offsetl = pl[1] - pl[0]*slopel
 
         # right bound
-        pr1 = np.array([xc - dr*np.cos(phi + np.pi/2.0),
+        pr = np.array([xc - dr*np.cos(phi + np.pi/2.0),
                        yc - dr*np.sin(phi + np.pi/2.0)])
-        pr2 = np.array([pr1[0]+np.cos(phi),
-                        pr1[1]+np.sin(phi)])
-        sloper = (pr2[1]-pr1[1])/(pr2[0]-pr1[0]); sloper = np.clip(sloper, -1e4, 1e4)
-        offsetr = pr1[1] - pr1[0]*sloper
+        pr1 = pr - dr*np.array([np.cos(phi), np.sin(phi)])
+        pr2 = pr + dr*np.array([np.cos(phi), np.sin(phi)])
+        sloper = (pr2[1]-pr[1])/(pr2[0]-pr[0]); sloper = 1e4 if np.isinf(sloper) else sloper
+        offsetr = pr[1] - pr[0]*sloper
 
         slopes = [(slopel, pl1, pl2), (sloper, pr1, pr2)]
-        
+    
         bounds = []
         # xc, yc should definitely be a feasible point
         
@@ -121,8 +121,8 @@ class MpcProblem:
                             xc*slope + yc*(-1.0) + offset <= 0.0:
                 bounds.append(np.array([0.0, slope, -1.0, offset, -np.inf]))
             else:
-                raise ValueError("HUGE ERROR at a, b, c =", slope, -1.0, offset, "\ncenter", center_x, center_y)
-        return bounds
+                raise ValueError("HUGE ERROR at a, b, c =", slope, -1.0, offset, "\ncenter", xc, yc)
+        return bounds, np.vstack([pl1, pl2, pr2, pr1])
 
 
 
@@ -167,7 +167,9 @@ class MpcProblem:
                         ['x', 'u'],['xdot', 'L'])
 
         # for plotting
-        bounds = self.bound_x(estimated_path[0,0], estimated_path[1,0], estimated_path[3,0], left_widths[0], right_widths[0])
+        bounds, _ = self.bound_x(estimated_path[0,0], estimated_path[1,0], estimated_path[3,0], left_widths[0], right_widths[0])
+        #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
+        #state = self.roadrunner.save_state()
 
         # Formulate the NLP
         for k in range(self.model.N):
@@ -192,6 +194,7 @@ class MpcProblem:
             # State at collocation points
             Xc = []
             xy = estimated_path[0:2,k]
+            #xy = self.roadrunner.center(self.model.step, k, self.model.desired_speed)[0:2]
             for j in range(self._d):
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
@@ -203,8 +206,9 @@ class MpcProblem:
                 w0.append(self.model.state_estimate[:,k])                
 
                 # Add the polygonal bounds at step k                
-                bounds = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
-
+                bounds, _ = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
+                #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
+                
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
                     lbg.append(np.reshape(lb,(1,)))
@@ -241,15 +245,17 @@ class MpcProblem:
     
             w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
+            #self.roadrunner.advance_xy(self.model.state_estimate[:,k+1][0:2])
 
             # Add the polygonal bounds at step k+1
-            bounds = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
-                
+            bounds, _ = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
+            #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)            
+
             for (ub, a, b, c, lb) in bounds:
                 ubg.append(np.reshape(ub,(1,)))
                 lbg.append(np.reshape(lb,(1,)))
                 g.append(Xk[0]*a + Xk[1]*b + c)
-                
+            
 
             # Add equality constraint
             g.append(Xk_end-Xk)
@@ -262,7 +268,10 @@ class MpcProblem:
             xy_k = estimated_path[0:2,k+1]
             v_des = estimated_path[2,k]
             phi_k = estimated_path[3,k+1]
+            #xy_k = self.roadrunner.center(self.model.step, 0, self.model.desired_speed)
+            #v_des = self.model.desired_speed(k, xy_k[0], xy_k[1])
             self.x_center_plot[0:2,k] = xy_k
+            self.x_center_plot[2,k] = phi_k
             self.x_center_plot[-1,k] = v_des
             # recall Xk[0] and Xk[1] are world frame x-y position
             # Xk[2] is velocity, Xk[3] is angle in world frame
@@ -281,7 +290,7 @@ class MpcProblem:
                 lbg.append(np.zeros(1))
                 ubg.append(np.zeros(1))
 
-
+        #self.roadrunner.reset(**state)
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
         cost = self.weights["accuracy"]*self.attractive_cost + \
@@ -329,6 +338,10 @@ class MpcProblem:
         x_opt, u_opt = trajectories(sol['x'])
         self.x_opt = x_opt.full() # to numpy array
         self.u_opt = u_opt.full() # to numpy array
+
+                # Feed the previous state back to the model
+        self.model.set_state_estimate(self.x_opt)
+        self.model.set_control_estimate(self.u_opt)
 
         # This ensures the control does not change drastically from the previous
         # (already-executed) control
