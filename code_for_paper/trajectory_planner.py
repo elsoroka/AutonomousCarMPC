@@ -57,8 +57,13 @@ class TrajectoryPlanner():
 	def generate_path_estimate(self, driveable_corridor, desired_speed, constraint_generator):
 		# Use the callables to step along the road
 		z_estimate = np.zeros((self.n, self.N+1))
-		z_estimate[:,0] = self.z0
+		x0, y0, psi0, dl0, dr0 = driveable_corridor(self.z0[0], self.z0[1], self.mpcprob.model.step*self.z0[2])
+		v_des0 = desired_speed(x0, y0, 0)
+		z_estimate[:,0] = np.array([x0, y0, v_des0, psi0])
+		
 		dl, dr = np.zeros(self.N+1), np.zeros(self.N+1)
+		dl[0] = dl0; dr[0] = dr0
+
 		for k in range(1, self.N+1):
 			x_k, y_k, psi_k, dl_k, dr_k = driveable_corridor(self.mpcprob.model.state_estimate[0,k-1], \
 				                                             self.mpcprob.model.state_estimate[1,k-1], \
@@ -67,7 +72,7 @@ class TrajectoryPlanner():
 			z_estimate[:,k] = np.array([x_k, y_k, v_k, psi_k])
 			dl[k] = dl_k
 			dr[k] = dr_k
-		dl[0] = dl[1]; dr[0] = dr[1]
+		
 		return z_estimate, dl, dr
 
 	def generate_first_estimate(self, ic, driveable_corridor, desired_speed, constraint_generator):
@@ -79,7 +84,7 @@ class TrajectoryPlanner():
 		for i in range(self.N+1):
 			(x, y, psi, _, _) = driveable_corridor(self.z0[0], self.z0[1], s)
 			# x,y
-			v_des = desired_speed(i, x, y)
+			v_des = desired_speed(x, y, i)
 			state_estimate[0, i] = x
 			state_estimate[1,i] = y
 			state_estimate[2,i]   = v_des
@@ -96,8 +101,8 @@ class TrajectoryPlanner():
 	def initialize_first_mpc_problem(self, estimated_path):
 		# save the data
 		self.z0 = estimated_path[:,0] # initial condition
-		self.centers[:,0] = self.z0 # stupid indexing difference, sorry
-		self.x_true[:,0] = self.z0 # initial conditions
+		self.centers[:,0] = self.z0 
+		self.x_true[:,0] = self.z0
 		self.x_plan[:,0] = self.z0
 
 		# Very bad rough estimate of acceleration
@@ -113,8 +118,8 @@ class TrajectoryPlanner():
 		#self.mpcprob.model.set_state_estimate(z)
 		#self.mpcprob.model.set_control_estimate(u)
 
-	def build_mpc_problem(self, estimated_path, left_widths, right_widths, weights):
-		problem = self.mpcprob.build_problem(self.z0, estimated_path, left_widths, right_widths, weights)
+	def build_mpc_problem(self, estimated_path, left_widths, right_widths, weights, constraints):
+		problem = self.mpcprob.build_problem(self.z0, estimated_path, left_widths, right_widths, weights, constraints)
 		return problem
 
 	def solve_mpc_problem(self, problem):
