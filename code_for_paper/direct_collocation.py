@@ -263,9 +263,8 @@ class MpcProblem:
             ubg.append(np.zeros(n_constraints,))
             lbg.append(-np.Inf*np.ones(n_constraints,))
         
-            #g.append(-((y-y0)**2 + (x-x0)**2)*np.cos(np.arctan2(y0-y, x0-x)))
             g.append(constraints(Xkj[0], Xkj[1], k))
-                
+
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
