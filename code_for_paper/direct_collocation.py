@@ -126,7 +126,7 @@ class MpcProblem:
 
 
 
-    def build_problem(self, ic:np.array, estimated_path:np.array, left_widths:np.array, right_widths:np.array, weights:dict):
+    def build_problem(self, ic:np.array, estimated_path:np.array, left_widths:np.array, right_widths:np.array, weights:dict, constraints:callable):
         self.weights = weights
         self.ic = np.reshape(ic, (self.model.n,))
         # Start with an empty NLP
@@ -168,8 +168,6 @@ class MpcProblem:
 
         # for plotting
         bounds, _ = self.bound_x(estimated_path[0,0], estimated_path[1,0], estimated_path[3,0], left_widths[0], right_widths[0])
-        #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
-        #state = self.roadrunner.save_state()
 
         # Formulate the NLP
         for k in range(self.model.N):
@@ -194,7 +192,6 @@ class MpcProblem:
             # State at collocation points
             Xc = []
             xy = estimated_path[0:2,k]
-            #xy = self.roadrunner.center(self.model.step, k, self.model.desired_speed)[0:2]
             for j in range(self._d):
                 Xkj = ca.MX.sym('X_'+str(k)+'_'+str(j), self.model.n)
                 Xc.append(Xkj)
@@ -207,7 +204,6 @@ class MpcProblem:
 
                 # Add the polygonal bounds at step k                
                 bounds, _ = self.bound_x(estimated_path[0,k], estimated_path[1,k], estimated_path[3,k], left_widths[k], right_widths[k])
-                #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)
                 
                 for (ub, a, b, c, lb) in bounds:
                     ubg.append(np.reshape(ub,(1,)))
@@ -216,7 +212,7 @@ class MpcProblem:
                         g.append(Xkj[0]*a + Xkj[1]*b + c)
                     else:
                         g.append(Xkj[1]*b + c)
-                
+
 
             # Loop over collocation points
             Xk_end = self._D[0]*Xk
@@ -245,11 +241,9 @@ class MpcProblem:
     
             w0.append(self.model.state_estimate[:,k+1])
             x_plot.append(Xk)
-            #self.roadrunner.advance_xy(self.model.state_estimate[:,k+1][0:2])
 
             # Add the polygonal bounds at step k+1
             bounds, _ = self.bound_x(estimated_path[0,k+1], estimated_path[1,k+1], estimated_path[3,k+1], left_widths[k+1], right_widths[k+1])
-            #bounds, p = self.roadrunner.bound_x(self.model.step, 0, self.model.desired_speed)            
 
             for (ub, a, b, c, lb) in bounds:
                 ubg.append(np.reshape(ub,(1,)))
@@ -261,15 +255,22 @@ class MpcProblem:
             g.append(Xk_end-Xk)
             lbg.append(np.zeros((self.model.n,)))
             ubg.append(np.zeros((self.model.n,)))
+            # Add the additional constraints f(z) <= 0
             
+            x = Xkj[0]; y = Xkj[1]
+            y0 = 1; x0 = 15
+            n_constraints = 1
+            ubg.append(np.zeros(n_constraints,))
+            lbg.append(-np.Inf*np.ones(n_constraints,))
+        
+            g.append(-((y-y0)**2 + (x-x0)**2)*np.cos(np.arctan2(y0-y, x0-x)))
+                
 
             # Weakly attract state to middle of road
             # xy_k is (x,y,angle)
             xy_k = estimated_path[0:2,k+1]
             v_des = estimated_path[2,k]
             phi_k = estimated_path[3,k+1]
-            #xy_k = self.roadrunner.center(self.model.step, 0, self.model.desired_speed)
-            #v_des = self.model.desired_speed(k, xy_k[0], xy_k[1])
             self.x_center_plot[0:2,k] = xy_k
             self.x_center_plot[2,k] = phi_k
             self.x_center_plot[-1,k] = v_des
@@ -281,16 +282,7 @@ class MpcProblem:
                                      10*(Xk[2] - v_des)**2 + \
                                      (Xk[3]-phi_k)**2)
 
-            if self.indices_to_stop is not None and k >= self.indices_to_stop:
-                g.append(Xk[2])
-                lbg.append(np.zeros(1))
-                ubg.append(np.zeros(1))
-            if self.indices_to_start is not None and k < self.indices_to_start:
-                g.append(Xk[2])
-                lbg.append(np.zeros(1))
-                ubg.append(np.zeros(1))
 
-        #self.roadrunner.reset(**state)
         # This attracts the car to the middle of the road
         # Several papers make the steering change cost really big
         cost = self.weights["accuracy"]*self.attractive_cost + \
