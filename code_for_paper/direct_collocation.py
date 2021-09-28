@@ -257,13 +257,11 @@ class MpcProblem:
             ubg.append(np.zeros((self.model.n,)))
             # Add the additional constraints f(z) <= 0
             
-            x = Xkj[0]; y = Xkj[1]
-            y0 = 1; x0 = 15
             n_constraints = 1
             ubg.append(np.zeros(n_constraints,))
             lbg.append(-np.Inf*np.ones(n_constraints,))
         
-            g.append(constraints(Xkj[0], Xkj[1], k))
+            g.append(constraints(Xkj[0], Xkj[1], Xkj[2], Xkj[3], k))
 
 
             # Weakly attract state to middle of road
