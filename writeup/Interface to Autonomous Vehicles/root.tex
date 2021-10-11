@@ -416,7 +416,7 @@ Finally, the vehicle following scenario consists of a straight road with another
 
  \subsection{Double lane change}
  
-In this scenario, we tested a range of weights for the cost function \eqref{eq:costfinal}. Accuracy terms \eqref{eq:costcenter} and \eqref{eq:speed} were grouped. Jerk \eqref{eq:costjerk}, acceleration magnitude \eqref{eq:costaccel}, and steering change terms \eqref{eq:coststeering} were also grouped.
+In this scenario, we tested a range of weights for the cost function \eqref{eq:costfinal}. Accuracy terms \eqref{eq:costcenter} and \eqref{eq:speed} were grouped. Jerk \eqref{eq:costjerk} and steering change terms \eqref{eq:coststeering} were also grouped.
  
  Initial tuning was performed to keep the grouped terms within an order of magnitude of each other, resulting in a cost function with one adjustable weight $a$:
  $$J = \Big( J_{\text{accuracy}} + 10^3J_{\text{speed}} \Big) + a\Big( 10J_\text{{jerk}} + 10J_\text{{accel}} + J_{\text{steering}}\Big),$$
