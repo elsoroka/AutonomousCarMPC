@@ -1,0 +1,75 @@
+\begin{thebibliography}{10}
+
+\bibitem{beal}
+Craig~Earl Beal and J.~Christian Gerdes.
+\newblock Model predictive control for vehicle stabilization at the limits of
+  handling.
+\newblock {\em IEEE Transactions on Control Systems Technology},
+  21(4):1258--1269, 2013.
+
+\bibitem{pid}
+N.~{Mohajer}, S.~{Nahavandi}, H.~{Abdi}, and Z.~{Najdovski}.
+\newblock Enhancing passenger comfort in autonomous vehicles through vehicle
+  handling analysis and optimization.
+\newblock {\em IEEE Intelligent Transportation Systems Magazine}, pages 0--0,
+  2020.
+
+\bibitem{CHEBLY201712526}
+A.~Chebly, R.~Talj, and A.~Charara.
+\newblock Coupled longitudinal and lateral control for an autonomous vehicle
+  dynamics modeled using a robotics formalism.
+\newblock {\em IFAC-PapersOnLine}, 50(1):12526--12532, 2017.
+\newblock 20th IFAC World Congress.
+
+\bibitem{farag}
+Wael {Farag}.
+\newblock Complex-track following in real-time using model-based predictive
+  control.
+\newblock {\em International Journal of Intelligent Transportation Systems
+  Research}, 2020.
+
+\bibitem{pathfollowingMPC}
+M.~A. {Daoud}, M.~{Osman}, M.~W. {Mehrez}, and W.~W. {Melek}.
+\newblock Path-following and adjustable driving behavior of autonomous vehicles
+  using dual-objective nonlinear mpc.
+\newblock In {\em 2019 IEEE International Conference on Vehicular Electronics
+  and Safety (ICVES)}, pages 1--6, 2019.
+
+\bibitem{pathtracking}
+X.~{Li}, Z.~{Sun}, Q.~{Chen}, and J.~{Wang}.
+\newblock A novel path tracking controller for ackerman steering vehicles.
+\newblock In {\em Proceedings of the 32nd Chinese Control Conference}, pages
+  4177--4182, 2013.
+
+\bibitem{nmpc_micheli}
+Francesco Micheli, Mattia Bersani, Stefano Arrigoni, Francesco Braghin, and
+  Federico Cheli.
+\newblock {NMPC} trajectory planner for urban autonomous driving.
+\newblock {\em CoRR}, abs/2105.04034, 2021.
+
+\bibitem{arrigoni2021mpc}
+Stefano Arrigoni, Francesco Braghin, and Federico Cheli.
+\newblock Mpc path-planner for autonomous driving solved by genetic algorithm
+  technique, 2021.
+
+\bibitem{nmpc_platform}
+Stefano Arrigoni, Simone Mentasti, Federico Cheli, Matteo Matteucci, and
+  Francesco Braghin.
+\newblock Design of a prototypical platform for autonomous and connected
+  vehicles.
+\newblock {\em CoRR}, abs/2106.09307, 2021.
+
+\bibitem{Casadi}
+Joel A~E Andersson, Joris Gillis, Greg Horn, James~B Rawlings, and Moritz
+  Diehl.
+\newblock {CasADi} -- {A} software framework for nonlinear optimization and
+  optimal control.
+\newblock {\em Mathematical Programming Computation}, 11(1):1--36, 2019.
+
+\bibitem{ipopt}
+Andreas Wächter and Lorenz~T. Biegler.
+\newblock On the implementation of an interior-point filter line-search
+  algorithm for large-scale nonlinear programming.
+\newblock {\em Mathematical Programming}, 2006.
+
+\end{thebibliography}

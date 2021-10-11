@@ -1,0 +1,90 @@
+Introduction
+80% of innovations are in software, good point to make.
+"more dependent on the vehicle specific hardware" is a good point, exactly what Prof. Lall is looking for
+don't say tire size -> say characteristics
+
+sport driving vs eco friendly -> a good example, we might want to mention these are changes that usually involve both changes to the traction control software, stability control, and changes to the suspension. So that's an interesting physical change in that the software might apply actuators to stiffen the springs. So this is below the level of autonomous software (prof. Lall says so).
+
+sport mode changes acceleration and braking response, steering (steering has a curve which relates the angle of the hand wheel to the angle of the road wheel) which is a complicated, speed-dependent map in itself. When the car is going slowly, you can turn the wheel very easily and a very large change happens in the road wheel, when you go quickly you get smaller changes.
+The suspension makes a huge difference, you want it to be stiffer. Lots of modern cars have mechanical ways of changing the suspension stiffness.
+
+example: Prius eco vs sport mode. engine characteristics, changes the air-fuel mixture or number of cylinders that fire to make the engine more responsive vs more efficient. One car can switch from 6 to 4 cylinders in eco mode, which makes it cheaper to run.
+
+regenerative vs brake calipers -> 
+
+robustness, Sanjay thinks that's important. Wants to also mention more about adaptivity. not just that you want it to work no matter what the road conditions, but to have a controller that adapts to road conditions. 
+
+Between practical considerations and future work, is a description of the MPC code we have. 
+Task list: Write up the MPC.
+
+Start putting in the problem formulation, mathematics, set up algorithms to solve.
+
+Online estimation, model estimation might be an interesting research topic. Estimating road conditions. It would be nice to quickly and accurately estimate road conditions by having low level control of the vehicle. We want to estimate how much slip/grip there is. If we have separate motors on each of the wheels (electric, the future is electric) we see how much slip we get. So by having four independent motors you can measure in real time how much slip there is.
+
+So if one of the wheels goes into the puddle, that's a really hard situation to handle. or one side of the car goes on a patch of ice while the other doesn't. That's a hard situation to handle for controlling the vehicle. Anything you can do which is on-line estimation to give you more information about these parameters is interesting.
+
+Sometimes these can be large problems when you model them in enough detail. So maybe large matrix computation is relevant?
+
+Pacejka tire model, the one every car company and tire manufacturer uses (or more complicated ones). We can read about it.
+
+You model things in enough detail, you get complexity quite quickly.
+Suspension, you have to model the entire car with the FEM model. THese get really big really quickly. YOu want to know how the vibrational modes of the structure interact with the vibrational modes of the suspension system.
+
+They have big rigs for experimentally measuring vibrational modes of vehicles because it's difficult to model.
+Expensive computaitons and expensive things.
+
+
+Notes from 03/25/2021
+TA position: Sanjay worried about time.
+That was a long time ago.
+Email ta@ee.stanford.edu
+Contact Marisa Cheng: mcheng2@stanford.edu, Packard 171, Telephone: 5-9327 
+
+
+
+Email Patrick about two clsases vs 3
+real analysis, state estimation
+
+Prof. Lall thinks I have enough research to present.
+
+Typically that's practically not an option for many systems to lift them up to the Koopman operator.
+
+Ford presentation:
+Everyone wants disruptive stuff. Lol. "Everyone wants to discover gold in their backyard, doens't mean you're going to." Industry has very little idea of what disruptive research actually is. 
+Definitely want to present something.
+
+
+2021-03-04 Week 8 Thursday
+
+Paper
+Hasn't had a chance to read it.
+
+Ford proposals
+The trick with tire parameters is one wants to do it quickly.
+The most interesting problem in that space is that tire parameters and road surface go together, so estimating tire parameters is one thing but then you're really measureing the force response of the tire against the road, so the road changes as well. And this question of what do we want to know is important. We want to know how the tire is interacting with the road, is it wet or dry, etc.
+
+The latter problem (how does the tire interact with the road) is important because you can have a self-driving car that's driving along and it runs over a patch of ice on one wheel or one side. This problem is a well-known problem where you have this very different amount of traction on each side of the vehicle. So it can be very difficult to handle.
+
+So, in order to detect it you need to detect the slip. the friction of the wheels. you need to do it quickly because it's a dynamic event, it happens very fast.
+One of the things that makes it hard to detect from data in real time.
+Often you don't have a lot of data, the slip suddenly changes.
+
+The other thing is instead of doing that, make a proposal based on current research, which is perhaps more easy to do. it fits with their needs and thinks it's an interesting idea that they may well not have thought of.
+
+The fundamental question of what's the abstraction to represent the vehicle is the most important. They're trying to design self driving cars but they have a whole range of cars, they don't want to write a lot of software. They need a clear separation between the autonomy stack and vehicle layer.
+
+Presenting trajectory optimization MPC as the natural boundary, Sanjay thinks is a reasonable idea.
+And we've got the paper that we could form the basis for a proposal as well. The pre-proposal is one page.
+
+Go to the box, there's a link to the Stanford Box (it's saved in my Box account) to download the appropriate forms, look at it and see what it takes.
+
+
+Paperwork, quals
+Marisa to work on CA paperwork soon! Looks promising.
+Mykel Kochenderfer is my co-advisor!!
+Lall has a lot of knowledge about quals actually. I might want to talk to Dr. Rock or Sigrid.
+
+
+Presentation
+More explanation and background, the presentation doesn't need to be very long. It can be short. It can be 20 minutes.
+It is helpful because I will need to do a research presentation for quals.
