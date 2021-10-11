@@ -463,8 +463,8 @@ In this scenario, we tested a range of weights for the cost function \eqref{eq:c
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=1.0\linewidth]{figures/stop_sign.pdf}
-	\label{fig:stop_sign}
 	\caption{Vehicle stopping at a stop sign using this interface and nonlinear MPC algorithm to compute control signals. The desired speed was 4 m/s.}
+		\label{fig:stop_sign}
 \end{figure}
  
 % \begin{figure}[h!]
@@ -483,8 +483,7 @@ The desired velocity profile was a rough estimate: the velocity was set at $4\ \
  \begin{figure}[h!]
  	\centering
  	\includegraphics[width=0.8\linewidth]{figures/stop_sign_velocity.pdf}
- 	\label{fig:stop_sign_velocity}
- 	\caption{Velocity in stop sign test vs time. The desired speed was 4 m/s.}
+ 	\caption{Velocity in stop sign test vs time. The desired speed was 4 m/s.} 	 	\label{fig:stop_sign_velocity}
  \end{figure}
  
   \subsection{Following another vehicle}
@@ -510,8 +509,7 @@ If the vehicle was left to follow its desired speed and road centerline, it woul
  \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.8\linewidth]{figures/vehicle_following_velocity.pdf}
-	\label{fig:vehicle_following_velocity}
-	\caption{Ego vehicle velocity decreases to maintain a safe distance from another car.}
+	\caption{Ego vehicle velocity decreases to maintain a safe distance from another car.}		\label{fig:vehicle_following_velocity}
 \end{figure}
 
  %Finally, to select one set of weights for \eqref{eq:costfinal} we measured both the maximum jerk and the total jerk (computed by numerical integration). Table \ref{tab:jerk(stop)} summarizes these results. The result with $a=25$, corresponding to a cost function of
