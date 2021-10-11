@@ -1,0 +1,82 @@
+\relax 
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Steering and Acceleration for Autonomous Vehicles}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {II-A}}Software Reusability Considerations}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {II-B}}Performance Considerations}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {II-C}}Trajectory Tracking vs Optimization}{1}}
+\citation{pid}
+\citation{CHEBLY201712526}
+\citation{CHEBLY201712526}
+\citation{farag}
+\citation{beal}
+\citation{pathtracking}
+\citation{pathtracking}
+\citation{CHEBLY201712526}
+\citation{beal}
+\citation{Korda_2018}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Prior Work}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-A}}Classical Control for Trajectory Tracking}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-B}}MPC Trajectory Tracking}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-C}}Trajectory Optimization}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-D}}Practical Considerations}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-E}}Summary}{2}}
+\citation{farag}
+\citation{farag}
+\citation{li6640152}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Implementation of a Nonlinear MPC Trajectory Optimizer}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Block diagram showing how this controller fits into a larger autonomy stack.}}{3}}
+\newlabel{fig:block}{{1}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Kinematic bicycle model.}}{3}}
+\newlabel{fig:kinematic}{{2}{3}}
+\newlabel{eq:kinematic}{{1}{3}}
+\newlabel{eq:beta}{{2}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces A short sample of overlapping lines to define the road corridor. 2 lines are used per step: for an MPC problem with steps $x_1,\dots  ,x_N$, $2N$ lines are required.}}{3}}
+\newlabel{fig:roadpolygons}{{3}{3}}
+\citation{Casadi}
+\citation{ipopt}
+\newlabel{eq:costcenter}{{3}{4}}
+\newlabel{eq:speed}{{4}{4}}
+\newlabel{eq:costjerk}{{5}{4}}
+\newlabel{eq:coststeering}{{6}{4}}
+\newlabel{eq:costaccel}{{7}{4}}
+\newlabel{eq:costfinal}{{8}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-A}}Implementation Details}{4}}
+\newlabel{eq:controllimits}{{15}{4}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Results}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {V-A}}Double lane change}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces The double-lane-change scenario with several test runs. The road width is 5 m and the desired speed is $10\ \text  {m}/\text  {s}$.}}{5}}
+\newlabel{fig:trajectory(lanechange)}{{4}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Steering signal (in degrees) for the double-lane-change scenario.}}{5}}
+\newlabel{fig:steering(lanechange)}{{5}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {V-B}}Stop sign}{5}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Jerk applied during stopping maneuver for different MPC cost weights.}}{5}}
+\newlabel{tab:jerk(stop)}{{I}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Position error from the road centerline (meters) in the double-lane-change scenario.}}{5}}
+\newlabel{fig:error(lanechange)}{{6}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Velocity vs time (top) and position(bottom) for the stop sign scenario. The desired or estimated velocity decreases linearly with position.}}{5}}
+\newlabel{fig:velocity(stop)}{{7}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Acceleration signal (top, $\text  {m}/\text  {s}^2$) and jerk (bottom, $\text  {m}/\text  {s}^3$) for the stop sign scenario.}}{5}}
+\newlabel{fig:acceleration_jerk(stop)}{{8}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {V-C}}Changing parameters}{5}}
+\bibstyle{unsrt}
+\bibdata{bibliography}
+\bibcite{pid}{1}
+\bibcite{CHEBLY201712526}{2}
+\bibcite{farag}{3}
+\bibcite{beal}{4}
+\bibcite{pathtracking}{5}
+\bibcite{Korda_2018}{6}
+\bibcite{li6640152}{7}
+\bibcite{Casadi}{8}
+\bibcite{ipopt}{9}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Steering control signal for varying vehicle CG in the double-lane-change scenario (top). A close-up inspection (bottom) shows the controller begins steering earlier when the CG changes. This makes sense since the change makes the vehicle less maneuverable.}}{6}}
+\newlabel{fig:Steering(param)}{{9}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Velocity is almost unchanged despite changing the model parameters.}}{6}}
+\newlabel{fig:velocity(param)}{{10}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Position error is unchanged despite changing the model parameters.}}{6}}
+\newlabel{fig:position(param)}{{11}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {V-D}}Limitations}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusions}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Future Work}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Acknowledgments}{6}}
+\@writefile{toc}{\contentsline {section}{References}{6}}

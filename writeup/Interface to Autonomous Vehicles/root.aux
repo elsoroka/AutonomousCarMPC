@@ -1,0 +1,92 @@
+\relax 
+\citation{beal}
+\citation{pid}
+\@writefile{toc}{\contentsline {section}{\numberline {I}INTRODUCTION}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}THE AV STEERING AND ACCELERATION CONTROL PROBLEM}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-A}Configurability}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-B}Division at Waypoints}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-C}Division at Maneuvers}{1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {II-D}The Design Task}{1}}
+\citation{CHEBLY201712526}
+\citation{CHEBLY201712526}
+\citation{farag}
+\citation{pathfollowingMPC}
+\citation{beal}
+\citation{pathtracking}
+\citation{nmpc_micheli}
+\citation{arrigoni2021mpc}
+\citation{nmpc_platform}
+\@writefile{toc}{\contentsline {section}{\numberline {III}PRIOR WORK}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-A}Classical Control for Trajectory Tracking}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-B}MPC Trajectory Tracking}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {III-C}Trajectory Optimization}{2}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}AN API FOR AV TRAJECTORY PLANNERS}{2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Block diagram showing how this paper fits into a larger autonomy stack.}}{2}}
+\newlabel{fig:block}{{1}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-A}Desired Speed}{2}}
+\citation{farag}
+\citation{farag}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-B}Driveable Corridor}{3}}
+\newlabel{sub:corridor}{{IV-B}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces The driveable corridor function accepts the current position $(x,y)$ and offset $s$, then returns a new position $(x_c, y_c)$ and distances $d_l$ and $d_r$ a distance $s$ away from the current position.}}{3}}
+\newlabel{fig:corridor}{{2}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-C}State Constraints}{3}}
+\newlabel{sub:constraints}{{IV-C}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces This road has a wide shoulder. Using a left and right distance allows the centerline to represent the ``center" a reasonable human driver would follow, which may not be the geometric center.}}{3}}
+\newlabel{fig:corridor_with_shoulder}{{3}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces When stopping, the vehicle must stay behind the line. Its position is constrained using a linear inequality to restrict it to the green region.}}{3}}
+\newlabel{fig:stopsign}{{4}{3}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}IMPLEMENTATION}{3}}
+\newlabel{eq:kinematic}{{1}{3}}
+\newlabel{eq:beta}{{2}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces The ego vehicle is following another car. The linear inequality moves at each timestep $k=1,\dots  ,N$. to enforce a minimum safe distance.}}{4}}
+\newlabel{fig:vehicle_in_front}{{5}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces An obstacle (X) obstructs one lane, creating a circular keep-out region of radius $r$. The vehicle must stay out of the circle, creating a nonconvex constraint $(x-x_{obs})^2 + (y-y_{obs})^2 \geq r$}}{4}}
+\newlabel{fig:obstacle}{{6}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Kinematic bicycle model.}}{4}}
+\newlabel{fig:kinematic}{{7}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces A short sample of overlapping lines to define the road corridor. 2 lines are used to constrain the vehicle's position at eack step $k$.}}{4}}
+\newlabel{fig:roadpolygons}{{8}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-A}Cost function}{4}}
+\newlabel{eq:costcenter}{{3}{4}}
+\newlabel{eq:speed}{{4}{4}}
+\newlabel{eq:costjerk}{{5}{4}}
+\newlabel{eq:coststeering}{{6}{4}}
+\newlabel{eq:costfinal}{{7}{4}}
+\citation{Casadi}
+\citation{ipopt}
+\citation{nmpc_micheli}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-B}Implementation Details}{5}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Nonlinear MPC controller using proposed API.}{5}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Results}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VI-A}Double lane change}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces The double-lane-change scenario. The road width is 5 m and the desired speed is $10\ \text  {m}/\text  {s}$. To minimize jerk and sharp changes in steering angle, the vehicle deviates from the road centerline.}}{5}}
+\newlabel{fig:trajectory(lanechange)}{{9}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Position error from the road centerline (meters) in the double-lane-change scenario with different MPC weights.}}{5}}
+\newlabel{fig:error(lanechange)}{{10}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VI-B}Stop sign}{5}}
+\citation{nmpc_micheli}
+\bibstyle{unsrt}
+\bibdata{bibliography}
+\bibcite{beal}{1}
+\bibcite{pid}{2}
+\bibcite{CHEBLY201712526}{3}
+\bibcite{farag}{4}
+\bibcite{pathfollowingMPC}{5}
+\bibcite{pathtracking}{6}
+\bibcite{nmpc_micheli}{7}
+\bibcite{arrigoni2021mpc}{8}
+\bibcite{nmpc_platform}{9}
+\bibcite{Casadi}{10}
+\bibcite{ipopt}{11}
+\newlabel{fig:stop_sign}{{VI-B}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Vehicle stopping at a stop sign using this interface and nonlinear MPC algorithm to compute control signals. The desired speed was 4 m/s.}}{6}}
+\newlabel{fig:stop_sign_velocity}{{VI-B}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Velocity in stop sign test vs time. The desired speed was 4 m/s.}}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VI-C}Following another vehicle}{6}}
+\newlabel{fig:vehicle_following}{{VI-C}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Following a slower car. The desired speed is 4 m/s but the car ahead is traveling at 3.75 m/s. The white lines connect the two vehicle's positions at each time step, showing how a safe distance is maintained.}}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}CONCLUSIONS}{6}}
+\newlabel{fig:vehicle_following_velocity}{{VI-C}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Ego vehicle velocity decreases to maintain a safe distance from another car.}}{6}}
+\@writefile{toc}{\contentsline {section}{References}{6}}
