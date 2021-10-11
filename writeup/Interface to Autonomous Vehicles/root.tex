@@ -72,14 +72,21 @@ Designing an API for Autonomous Vehicle Steering Controllers
 }
 
 
-\author{Emiko Soroka and Sanjay Lall
+\author{Emiko Soroka${}^1$ and Sanjay Lall${}^2$
 %\thanks{*This work was not supported by any organization}% <-this % stops a space
 %\thanks{}%
 %\thanks}%
 }
 
+\makeatletter
+\newcommand{\makefootnote}[2]{{
+  \def\@thefnmark{#1}
+  \@footnotetext{#2}
+}}
+\makeatother
 
 \begin{document}
+
 
 
 
@@ -92,6 +99,11 @@ Designing an API for Autonomous Vehicle Steering Controllers
 \pagestyle{empty}
 
 
+\makefootnote{1}{S. Lall is Professor of Electrical
+  Engineering at Stanford University, Stanford, CA 94305, USA.
+  \texttt{lall@stanford.edu}\medskip}
+
+\makefootnote{2}{E. Soroka is \dots}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
