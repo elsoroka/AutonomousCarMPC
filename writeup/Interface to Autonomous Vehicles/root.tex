@@ -501,8 +501,8 @@ The desired velocity profile was a rough estimate: the velocity was set at $4\ \
  \begin{figure}[h!]
  	\centering
  	\includegraphics[width=1.0\linewidth]{figures/vehicle_following.pdf}
- 	\label{fig:vehicle_following}
  	\caption{Following a slower car. The desired speed is 4 m/s but the car ahead is traveling at 3.75 m/s. The white lines connect the two vehicle's positions at each time step, showing how a safe distance is maintained.}
+        \label{fig:vehicle_following}
  \end{figure}
  
 If the vehicle was left to follow its desired speed and road centerline, it would approach the car in front too closely. The hard constraint causes its speed to decrease, maintaining a safe distance. Fig. \ref{fig:vehicle_following} shows the position of each vehicle over time.
