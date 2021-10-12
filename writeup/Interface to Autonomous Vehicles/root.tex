@@ -42,8 +42,9 @@
 % General style options, mostly controlling line numbers
 \lstset{
 	frame            = lines,
+	framesep         = 1em,
 	showstringspaces = false,
-	numbers          = left,          % Line numbers left
+%	numbers          = left,          % Line numbers left
 	numberstyle      = \color{black}, % Line numbers are black, not deepblue
 	breaklines       = true,          % Wrap overly-long lines
 }
@@ -66,6 +67,7 @@
 }
 
 
+\pdfobjcompresslevel=0
 
 \title{\LARGE \bf
 Designing an API for Autonomous Vehicle Steering Controllers
@@ -107,32 +109,33 @@ Designing an API for Autonomous Vehicle Steering Controllers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
-Software reusability is critical to the rapid development and certification of autonomous vehicles (AVs). However, little attention has been given to designing AV controllers for increased software reusability. In this paper we approach the design task from a reusability perspective to specify an API between higher-level AV action planning and lower-level trajectory optimization. Clearly defining this interface confines hardware dependencies to the lower-level trajectory planning module, improving software reusability. We implement a nonlinear MPC controller in simulation to demonstrate the feasibility of this API in common traffic scenarios. % TODO fix
+Software reusability is critical to the rapid development and certification of autonomous vehicles (AVs). However, little attention has been given to designing AV controllers for increased software reusability. In this paper we approach the design task from a software reusability perspective to specify an API between higher-level AV action planning and lower-level trajectory optimization. Clearly defining this interface confines hardware dependencies to the lower-level trajectory planning module, improving software reusability. We implement a nonlinear MPC controller in simulation to demonstrate the feasibility of this API in representing common traffic scenarios.
 \end{abstract}
 
+% Keywords
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
 
 Advanced driver assistance systems (ADAS) and autonomous vehicles are a rapidly growing segment of the automotive industry. However, the rise of automotive software presents new challenges in software reusability.
 % TODO In the introduction we might mention ASIL V, a functional safety thing: automotive safety integrity level. THe other thing is ISO 26262. Both of these are standards that enforce regulations about how the software that controls functional parts of the car must be written. The point is automotive companies have to certify the software against ASIL and ISO 26262 and if you can have a software system which can be certified and reused, that's "a huge win". So we should expand a little more on this point by mentioning these standards. There's a company called Apex.Ai that takes things like ROS and make a version which is ASIL and ISO 26262 certified.
-Developing an autonomy stack for a single vehicle is only the first step in bringing AVs to market. After developing a prototype AV, manufacturers need to adapt their stack to vehicles with different capabilities. Software reuse is a key component of this process: if the stack can be certified once under standards such as ASIL and ISO 26262, then deployed to other platforms, AV manufacturers can rapidly enter all segments of the vehicle market.
+Developing an autonomy stack for a single vehicle is only the first step in bringing AVs to market. After developing a prototype AV, manufacturers must adapt their stack to vehicles with different capabilities. Software reuse is a key component of this process: if the stack can be certified once under standards such as ASIL and ISO 26262, then deployed to other platforms, AV manufacturers can rapidly enter all segments of the vehicle market.
 
 Autonomous route planning, object recognition, and other high-level decision-making processes are hardware-agnostic. However, steering and acceleration control is tightly coupled to specific hardware. To optimize fuel efficiency, for example, a gasoline-powered vehicle must be driven differently than an electric-gas hybrid or fully electric vehicle with regenerative braking. In emergency situations, knowledge of tire-road interactions, vehicle inertia, center of gravity, and engine performance is critical to averting an accident \cite{beal}. Thus, lower level control algorithms are much less portable between different vehicles.
 
-We approach AV steering and acceleration control from a software reusability perspective. We propose that an optimizing controller, requiring only information about its environment and desired behavior, removes hardware dependencies in higher-level modules and improves AV software reusability. Moreover, this approach allows the desired driving behavior to be changed without re-tuning the controller. The proposed interface decreases software development and certification requirements.
+We approach AV steering and acceleration control from a software reusability perspective. We propose that an optimizing controller, requiring only information about its environment and desired behavior, removes hardware dependencies in higher-level modules and enables AV software reusability. Moreover, this approach allows the desired driving behavior to be changed without re-tuning the controller. The proposed interface decreases software development and certification requirements.
 
 
 \section{THE AV STEERING AND ACCELERATION CONTROL PROBLEM}
 \subsection{Configurability}
-Major concerns with steering and acceleration control for autonomous vehicles include fuel efficiency, passenger comfort, and safety. However, different applications of autonomy put different weight on these objectives. An autonomous truck delivering cargo prioritizes fuel efficiency. An autonomous taxi must avoid maneuvers that would cause discomfort or alarm to customers. Many ADAS-equipped vehicles in today's market offer the option of switching between different driving modes, for example `sport' and `eco-friendly' modes, which change the vehicle's performance. This suggests that fully autonomous consumer vehicles would be expected to offer the same type of configurable experience.
+Major concerns with steering and acceleration control for autonomous vehicles include fuel efficiency, passenger comfort, and safety. However, different applications of autonomy put different weight on these objectives. An autonomous truck prioritizes fuel efficiency. An autonomous taxi must avoid maneuvers that would cause discomfort or alarm to customers. Many ADAS-equipped vehicles in today's market offer the option of switching between different driving modes, for example `sport' and `eco-friendly' modes, which change the vehicle's performance. This suggests that fully autonomous consumer vehicles would be expected to offer the same type of configurable experience.
 
 
-\subsection{Division at Waypoints}
+\subsection{Software Division at Waypoints}
 
-To reduce hardware dependencies, one could seek to simplify the low-level controller. Suppose our high-level software plans driving maneuvers (such as turning, stopping, or maintaining a safe distance from another vehicle) and decomposes these maneuvers into a trajectory of closely spaced waypoints specifying the vehicle's state over time. The low level controller tracks this trajectory. Unfortunately, without hardware knowledge informing the trajectory generation, the vehicle follows a sub-optimal path, limiting its ability to handle dynamic emergency situations.
+To reduce hardware dependencies, one could seek to simplify the low-level controller. Suppose our high-level software plans driving maneuvers (such as turning, stopping, or maintaining a safe distance from another vehicle) and decomposes these maneuvers into a trajectory of closely spaced waypoints specifying the vehicle's state over time. The low level controller tracks this trajectory. Unfortunately, without hardware knowledge informing the trajectory generation, the vehicle follows a sub-optimal path, limiting its ability to handle dynamic emergency situations. With hardware knowledge, the high-level route planner is tied to a specific AV platform.
 
-\subsection{Division at Maneuvers} Alternatively, suppose we divide the software where driving maneuvers are specified. The low-level controller receives data about these maneuvers, such as the road boundaries and specific, desired states (such as stopping at a stop sign or maintaining a safe distance behind another car). The controller then computes a trajectory using hardware-specific information. For example, a hybrid with regenerative braking can recover electric energy, while a vehicle without this capability may spend more time coasting to a stop and less time actively braking. A vehicle on a wet road can steer more conservatively. The trajectory optimization is coupled to the hardware, providing a performance benefit that must be weighed against the development cost of the optimizing controller.
+\subsection{Software Division at Maneuvers} Alternatively, suppose we divide the software where driving maneuvers are specified. The low-level controller receives data about these maneuvers, including the road boundaries and specific, desired states (such as stopping at a stop sign or maintaining a safe distance behind another car). The controller then computes a trajectory using hardware-specific information. For example, a hybrid with regenerative braking can recover electric energy, while a vehicle without this capability may spend more time coasting to a stop and less time actively braking. A vehicle on a wet road can steer more conservatively. While the trajectory optimization is coupled to the hardware, the higher-level route planner is not.
 
 \subsection{The Design Task}
 In this paper we divide hardware-dependent and -independent software at the level of driving maneuvers: the low-level controller receives a driveable corridor, desired speed, and specific objectives. The controller then computes a trajectory using hardware-specific knowledge. We propose an interface between low level and high level software capable of representing arbitrary driving maneuvers and present an example controller.
@@ -140,10 +143,10 @@ In this paper we divide hardware-dependent and -independent software at the leve
 \section{PRIOR WORK}
 
 \subsection{Classical Control for Trajectory Tracking}
-PID controllers can be applied to steering and acceleration control; however, tuning the PID gains remains challenging. Mohajer et al. define a multi-objective problem to evaluate a trajectory for efficiency and passenger comfort, then apply a genetic algorithm to optimize their controller's PID gains offline \cite{pid}. This significantly reduces path tracking error and undesirable high-frequency control inputs over their baseline of hand-tuned PID gains. However, information about the vehicle's hardware is required to complete the PID tuning. The authors use 28 numerical parameters describing the vehicle's geometry, inertia matrices, and shock absorber performance to simulate the PID controller during the optimization process. This suggests in a practical application, the tuning procedure would need to be rerun for a variety of different configurations.
+PID controllers can be applied to steering and acceleration control; however, tuning the PID gains remains challenging. Mohajer et al. define a multi-objective problem to evaluate a trajectory for efficiency and passenger comfort, then apply a genetic algorithm to optimize PID gains offline \cite{pid}. This significantly reduces path tracking error and undesirable high-frequency control inputs over a baseline of hand-tuned PID gains. However, information about the vehicle's hardware is required to complete the PID tuning. The authors use 28 numerical parameters describing the vehicle's geometry, inertia matrices, and shock absorber performance to simulate the PID controller during the optimization process. This suggests in a practical application, the tuning procedure would need to be rerun for a variety of different configurations.
 
 
-Classical control can be applied to complex vehicle models. Chebly et al. develop a multi-body model of the vehicle, using 21 bodies connected by joints to represent the chassis, suspension, steering, and wheels \cite{CHEBLY201712526}. Their work uses 12 parameters including vehicle mass, inertia, and cornering stiffnesses of tires. The high fidelity of this vehicle model enables the steering and acceleration controller to perform well in highly nonlinear situations \cite{CHEBLY201712526}. The authors also discuss the controller's robustness to errors caused by variations in the vehicle's mass or tire stiffness, verifying the controller can continue to track the reference trajectory with a $\pm30\%$ error in these parameters.
+Classical control has been applied to complex vehicle models. Chebly et al. develop a multi-body model of the vehicle, using 21 bodies connected by joints to represent the chassis, suspension, steering, and wheels \cite{CHEBLY201712526}. Their work uses 12 parameters including vehicle mass, inertia, and cornering stiffnesses of tires. The high fidelity of this vehicle model enables the steering and acceleration controller to perform well in highly nonlinear situations \cite{CHEBLY201712526}. The authors also discuss the controller's robustness to errors caused by variations in the vehicle's mass or tire stiffness, verifying the controller can continue to track the reference trajectory with a $\pm30\%$ error in these parameters.
 
 \subsection{MPC Trajectory Tracking}
 Farag et al. apply MPC trajectory tracking to achieve high performance on tracks featuring tight curves and hairpin turns \cite{farag}. Notably, this performance is achieved with only two parameters: the distances $l_f$ and $l_r$ from the vehicle's center of mass to its front and rear wheels, respectively. The authors use a simple kinematic bicycle model for the vehicle, noting that this increases the algorithm's portability to different vehicles.
@@ -157,7 +160,7 @@ Finally, Beal et al. develop an MPC tracking controller for stabilizing a vehicl
 There are fewer trajectory planning controllers, likely due to the increased difficulty of design. Li et al. apply an inner model control framework to split the task into 2 parts: first, given a safe corridor, a trajectory and optimal control input is computed. Then an inner model controller driven by this signal is used to account for disturbances in the vehicle \cite{pathtracking}. The authors selecte a bicycle model with three parameters: $l_r$, $l_f$, and vehicle mass. They also use a linear approximation to model tire forces with two parameters for front and rear tire stiffness.
 
 More recently, NMPC has been applied to directly compute the vehicle's state and control signals \cite{nmpc_micheli}. Micheli et al. use penalties and hard constraints to represent road boundaries, static obstacles, and moving obstacles in the nonlinear optimization problem.
-Though NMPC is computationally difficult, zero-order optimization approaches are also possible: Arrigoni et al. use genetic algorithms to solve the difficult nonlinear optimization problem in real time \cite{arrigoni2021mpc}. NMPC trajectory planning has also been demonstrated on real AV hardware \cite{nmpc_platform}.
+Though NMPC is computationally difficult, zero-order optimization approaches are also possible: Arrigoni et al. apply genetic algorithms to solve the difficult nonlinear optimization problem in real time \cite{arrigoni2021mpc}. NMPC trajectory planning has also been demonstrated on real AV hardware \cite{nmpc_platform}.
 
 \section{AN API FOR AV TRAJECTORY PLANNERS}
 
@@ -165,15 +168,15 @@ We propose the following division (Fig. \ref{fig:block}), focusing on the Trajec
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.7\linewidth]{figures/block_diagram.pdf}
+	\includegraphics[width=0.85\linewidth]{figures/block_diagram.pdf}
 	\caption{Block diagram showing how this paper fits into a larger autonomy stack.}
 	\label{fig:block}
 \end{figure}
 
-The proposed controller is initialized with vehicle-specific information, some of which may be estimated or changed over time (for example, tire-road friction parameters). In addition it may query three functions provided by higher-level software, described below.
+The proposed controller is initialized with vehicle-specific information, some of which may be estimated or changed over time (for example, tire-road friction parameters). In addition it may query three functions provided by high-level software, described below.
 
 \subsection{Desired Speed}
-The desired speed is an estimate of the vehicle's speed provided by higher-level software: for example, the speed of other traffic. The controller is not required to remain at this speed if a minor deviation yields improvement in other objectives.
+The desired speed is an estimate of the vehicle's speed provided by high-level software: for example, the speed of other traffic. The controller is not required to remain at this speed if a minor deviation yields improvement in other objectives.
 
 The desired speed is a function of position and timestep: the vehicle can accelerate according to some profile. Providing both position and time enables the function to represent moving obstacles.
 The function accepts a point $(x, y)$ in the driveable corridor and a timestep index $k \in 1,\dots,N$, then returns the desired speed at step $k$: $v_{des,k}$ (a floating-point value).
@@ -188,11 +191,11 @@ This can be used to construct a list of desired speeds for $N$ timesteps: $v_{de
 \subsection{Driveable Corridor} \label{sub:corridor}
 % TODO Should we discuss that the road is a union of discs? We have a representation that doesn't depend on time.
 
-The driveable corridor function takes the vehicle's current position $(x,y)$ and an offset $s$, returning a new center point $(x_c, y_c)$ and angle $\psi_c$ a distance $s$ away from $(x,y)$. Additionally, it returns the distances to the left and right boundaries $d_l$ and $d_r$ (measured perpendicular to the center line) at $(x_c, y_c)$ (Fig. \ref{fig:corridor}).
+The driveable corridor function takes the vehicle's current position $(x,y)$ and an offset $s$, returning a new center point $(x_c, y_c)$ and angle $\psi_c$ of the road centerline a distance $s$ away from $(x,y)$. Additionally, it returns the distances to the left and right boundaries $d_l$ and $d_r$ (measured perpendicular to the center line) at $(x_c, y_c)$ (Fig. \ref{fig:corridor}).
 %
 $$\texttt{driveable\_corridor($x,\ y,\ s$)} \rightarrow (x_c, y_c, \psi_c, d_l, d_r)$$
 %
-The center point is not necessarily the geometric center of the corridor. Providing two distances allows turnouts and wide shoulders to be represented (Fig. \ref{fig:corridor_with_shoulder}). 
+The center point is not necessarily the geometric center of the corridor; providing two boundaries allows turnouts and wide shoulders to be represented (Fig. \ref{fig:corridor_with_shoulder}). 
 Additionally, the driveable corridor is not necessarily the entire road. If an obstacle encroaches on the road, the corridor will be reduced.
 Finally, the corridor representation fails to account for obstacles with free space on both sides. This will be addressed in Section \ref{sub:constraints}.
 
@@ -207,7 +210,7 @@ Finally, the corridor representation fails to account for obstacles with free sp
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.9\linewidth]{figures/corridor_with_turnout.pdf}
-	\caption{This road has a wide shoulder. Using a left and right distance allows the centerline to represent the ``center" a reasonable human driver would follow, which may not be the geometric center.}
+	\caption{This road has a wide shoulder. Using a left and right distance allows the centerline to represent the ``center" a reasonable human driver would follow.}
 	\label{fig:corridor_with_shoulder}
 \end{figure}
 
@@ -287,7 +290,7 @@ We implemented a nonlinear MPC (NMPC) controller using this interface. To model 
  
  We consider an NMPC problem with lookahead steps $k=1,\dots,N$ with $N=30$ steps spaced a distance $\Delta_t = 0.075\ \text{s}$ apart. The nonlinearity is confined to the dynamics model \eqref{eq:kinematic} and constraints (Fig. \ref{fig:obstacle}). The cost function is quadratic.
  
-In our implementation, we used the driveable corridor function to generate a list of linear inequalities representing the road as shown in Fig. \ref{fig:roadpolygons}. Each right and left boundary constrains the vehicle's $x-y$ position at one step: for $N$ lookahead steps, $2N$ lines are generated. Arbitrarily tight curvatures can be represented by decreasing the time between each step (Fig. \ref{fig:roadpolygons}).
+In our implementation, we used the driveable corridor function to generate a list of linear inequalities representing the road as shown in Fig. \ref{fig:roadpolygons}. Each right and left boundary constrains the vehicle's $x-y$ position at one step: for $N$ lookahead steps, $2N$ lines are generated. Arbitrarily tight curvatures can be represented by decreasing the time between each step.
 
  \begin{figure}[h]
  	\centering
@@ -312,7 +315,7 @@ Our multi-objective cost function penalizes sharp accelerations which degrade pa
  \label{eq:speed}
  \end{equation}
  %
- where $(x_{\text{center},k},\ y_{\text{center},k},\ \psi_{\text{center},k}$ is returned by \texttt{driveable\_corridor} and $v_{\text{des},k}$ is returned by \texttt{desired\_speed}. These functions are provided by higher-level software (Fig. \ref{fig:block}).
+ where $(x_{\text{center},k},\ y_{\text{center},k},\ \psi_{\text{center},k}$ is returned by \texttt{driveable\_corridor} and $v_{\text{des},k}$ is returned by \texttt{desired\_speed}. These two functions are provided by the higher-level software (Fig. \ref{fig:block}).
  
  % TODO Rerpesente x, y, psi as lists from 1,k,...N and mention them in the code to relate the functions to the MPC problem defined in equations 9,...14
  
@@ -336,7 +339,7 @@ Our multi-objective cost function penalizes sharp accelerations which degrade pa
  
  By separating these terms, they can be weighted to produce different behaviors \eqref{eq:costfinal}.
  \begin{equation}
- J = a_1 J_{\text{accuracy}} + a_2 J_{\text{speed}} + a_3 J_{\text{jerk}} + a_4 J_{\text{steering}} + a_5J_{\text{accel}}
+ J = a_1 J_{\text{accuracy}} + a_2 J_{\text{speed}} + a_3 J_{\text{jerk}} + a_4 J_{\text{steering}}
  \label{eq:costfinal}
  \end{equation}
  
@@ -404,7 +407,7 @@ The control signals were limited to $-5 \leq a \leq 2.5$ and $-\pi/4 \leq \delta
  
  
  \section{Results} % TODO Fix
- We tested the controller on three scenarios. In the double-lane-change simulation, the vehicle is driving at $10\ \ms$ ($36\ \kmh$) and must navigate the ISO double lane-change path. The steering accuracy and the magnitude of the control signals is evaluated.
+ We tested the controller on three scenarios. In the double-lane-change simulation, the vehicle is driving at $10\ \ms$ ($36\ \kmh$) and must navigate the ISO double lane-change path. Positional accuracy \eqref{eq:costcenter} and steering smoothness \eqref{eq:coststeering} contribute to the cost function.
  
  The stop sign scenario consists of a straight road with a stop sign. The vehicle is driving at $4\ \ms$ ($14.4\ \kmh$), detects the stop sign from 10 m away, and must smoothly come to a stop.
  
@@ -415,7 +418,7 @@ Finally, the vehicle following scenario consists of a straight road with another
 In this scenario, we tested a range of weights for the cost function \eqref{eq:costfinal}. Accuracy terms \eqref{eq:costcenter} and \eqref{eq:speed} were grouped. Jerk \eqref{eq:costjerk} and steering change terms \eqref{eq:coststeering} were also grouped.
  
  Initial tuning was performed to keep the grouped terms within an order of magnitude of each other, resulting in a cost function with one adjustable weight $a$:
- $$J = \Big( J_{\text{accuracy}} + 10^3J_{\text{speed}} \Big) + a\Big( 10J_\text{{jerk}} + 10J_\text{{accel}} + J_{\text{steering}}\Big),$$
+ $$J = \Big( J_{\text{accuracy}} + 10^3J_{\text{speed}} \Big) + a\Big( 10J_\text{{jerk}} + J_{\text{steering}}\Big),$$
  A large value of $a$ corresponds to a high weight on comfort (smaller and smoother control signals) while a small value corresponds to a high weight on position and speed accuracy.
  Results are provided for several weights of $a$ to illustrate this tradeoff.
  In practice the weights would be application-dependent or adjusted on the fly as discussed in \cite{nmpc_micheli}.
@@ -479,7 +482,7 @@ The desired velocity profile was a rough estimate: the velocity was set at $4\ \
  
  \begin{figure}[h!]
  	\centering
- 	\includegraphics[width=0.8\linewidth]{figures/stop_sign_velocity.pdf}
+ 	\includegraphics[width=0.9\linewidth]{figures/stop_sign_velocity.pdf}
  	\vspace{-1em}
  	\caption{Velocity in stop sign test vs time. The desired speed was 4 m/s.} 	 	\label{fig:stop_sign_velocity}
  \end{figure}
@@ -507,7 +510,7 @@ The hard constraint causes the vehicle's speed to decrease, maintaining a safe d
  
  \begin{figure}[h!]
 	\centering
-	\includegraphics[width=0.8\linewidth]{figures/vehicle_following_velocity.pdf}
+	\includegraphics[width=0.9\linewidth]{figures/vehicle_following_velocity.pdf}
 	 	\vspace{-1em}
 	\caption{Ego vehicle velocity decreases to maintain a safe distance from another car.}		\label{fig:vehicle_following_velocity}
 \end{figure}
@@ -570,7 +573,7 @@ The hard constraint causes the vehicle's speed to decrease, maintaining a safe d
 \section{CONCLUSIONS}
 
 In this paper we defined an API for the trajectory planning module of an autonomous driving stack (Fig. \ref{fig:block}). The inputs to this module consist of information about the driveable corridor, constraints imposed by obstacles and rules of the road, and a desired speed: all information that can be provided by higher-level software with little knowledge of vehicle hardware. Therefore, the higher-level software can be certified once and installed on different AV platforms.
-We also demonstrate an NMPC trajectory planner that implements this API. The trajectory planner contains hardware-specific parameters, but can be ported to similar vehicles by changing said parameters. The controller is of similar design to other recent work \cite{nmpc_micheli}, suggesting the relevance of this software reusability-focused design to current research in NMPC AV controllers.
+We also demonstrate an NMPC trajectory planner that implements this API. The trajectory planner contains hardware-specific parameters, but can be ported to similar vehicles by changing said parameters. The controller is of similar design to recent work in NMPC steering and acceleration control \cite{nmpc_micheli}, suggesting the relevance of this software reusability-focused API to current research.
 
 %A conclusion section is not required. Although a conclusion may review the main points of the paper, do not replicate the abstract as the conclusion. A conclusion might elaborate on the importance of the work or suggest applications and extensions. 
 
@@ -594,12 +597,12 @@ We also demonstrate an NMPC trajectory planner that implements this API. The tra
 
 %Appendixes should appear before the acknowledgment.
 
-\section*{ACKNOWLEDGMENT}
+\section{ACKNOWLEDGMENTS}
 
 
 This work was completed under Professor Sanjay Lall in the Information Systems Lab. The NMPC code was based on several open-source files provided with CasADi.
-Code for this paper is published at \texttt{https://github.com/elsoroka/AutonomousCarMPC/
-	tree/master/code\_for\_paper}
+Code for this paper is published at \small\texttt{https://github.com/elsoroka/AutonomousCarMPC/
+	tree/master/code\_for\_paper}\normalsize
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
