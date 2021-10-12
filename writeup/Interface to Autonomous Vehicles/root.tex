@@ -103,7 +103,7 @@ Designing an API for Autonomous Vehicle Steering Controllers
   Engineering at Stanford University, Stanford, CA 94305, USA.
   \texttt{lall@stanford.edu}\medskip}
 
-\makefootnote{2}{E. Soroka is \dots}
+\makefootnote{2}{E. Soroka is a PhD student in Aeronautics and Astronautics at Stanford University, Stanford, CA 94305, USA. \texttt{esoroka@stanford.edu}\medskip}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
@@ -287,7 +287,7 @@ We implemented a nonlinear MPC (NMPC) controller using this interface. To model 
  
  We consider an NMPC problem with lookahead steps $k=1,\dots,N$ with $N=30$ steps spaced a distance $\Delta_t = 0.075\ \text{s}$ apart. The nonlinearity is confined to the dynamics model \eqref{eq:kinematic} and constraints (Fig. \ref{fig:obstacle}). The cost function is quadratic.
  
-In our implementation, we used the driveable corridor function to generate a list of linear inequalities representing the road as shown in Fig. \ref{fig:roadpolygons}. Each right and left boundary constrains the vehicle's $x-y$ position at one step: for $N$ lookahead steps, $2N$ lines are generated.
+In our implementation, we used the driveable corridor function to generate a list of linear inequalities representing the road as shown in Fig. \ref{fig:roadpolygons}. Each right and left boundary constrains the vehicle's $x-y$ position at one step: for $N$ lookahead steps, $2N$ lines are generated. Arbitrarily tight curvatures can be represented by decreasing the time between each step (Fig. \ref{fig:roadpolygons}).
 
  \begin{figure}[h]
  	\centering
@@ -296,12 +296,8 @@ In our implementation, we used the driveable corridor function to generate a lis
  	\label{fig:roadpolygons}
  \end{figure}
  
- This representation was selected to simplify the optimization problem. When generating a new right and left boundary for each lookahead step, arbitrarily tight curvatures can be represented by decreasing the time between each step (Fig. \ref{fig:roadpolygons}).
- 
  \subsection{Cost function}
- The cost function penalizes sharp turns and acceleration, which degrade passenger comfort, and deviations from the center of the driveable corridor that could confuse or alarm other drivers or passengers.
- 
- The cost terms are:
+Our multi-objective cost function penalizes sharp accelerations which degrade passenger comfort and deviations from the desired speed and center of the driveable corridor. We use 2 terms to control this accuracy:
  
  \begin{equation}
  J_{\text{accuracy}} = \sum_{k=1}^N\big\| \begin{bmatrix}
@@ -323,7 +319,7 @@ In our implementation, we used the driveable corridor function to generate a lis
  % TODO Using f(...) twice in equation 9 and in the defiition of the constraint generator
  % TODO The constraint generator should return a list of scalar constraints in case we have a situation with more than one constraint.
  
- Equation \eqref{eq:costcenter} controls path-following accuracy, while \eqref{eq:speed} controls how closely the vehicle stays at the desired speed. Because the desired speed could be small or large, the cost terms in \eqref{eq:costcenter} and \eqref{eq:speed} are separated so \eqref{eq:speed} can be weighted differently.
+ Equation \eqref{eq:costcenter} controls path-following accuracy, while \eqref{eq:speed} controls how closely the vehicle stays at the desired speed. Because the desired speed could be small or large, \eqref{eq:costcenter} and \eqref{eq:speed} are separated so they can be weighted differently.
  
  
  Equations \eqref{eq:costjerk} and \eqref{eq:coststeering} penalize undesirable sharp changes in acceleration ($\text{m}/\text{s}^2$) and steering angle (deg).
@@ -463,7 +459,8 @@ In this scenario, we tested a range of weights for the cost function \eqref{eq:c
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=1.0\linewidth]{figures/stop_sign.pdf}
-	\caption{Vehicle stopping at a stop sign using this interface and nonlinear MPC algorithm to compute control signals. The desired speed was 4 m/s.}
+	 	\vspace{-1.5em}
+	\caption{Using a hard constraint to enforce 0 velocity at a stop sign.}
 		\label{fig:stop_sign}
 \end{figure}
  
@@ -483,6 +480,7 @@ The desired velocity profile was a rough estimate: the velocity was set at $4\ \
  \begin{figure}[h!]
  	\centering
  	\includegraphics[width=0.8\linewidth]{figures/stop_sign_velocity.pdf}
+ 	\vspace{-1em}
  	\caption{Velocity in stop sign test vs time. The desired speed was 4 m/s.} 	 	\label{fig:stop_sign_velocity}
  \end{figure}
  
@@ -500,15 +498,17 @@ The desired velocity profile was a rough estimate: the velocity was set at $4\ \
  \begin{figure}[h!]
  	\centering
  	\includegraphics[width=1.0\linewidth]{figures/vehicle_following.pdf}
+ 	 	\vspace{-1.5em}
  	\caption{Following a slower car. The desired speed is 4 m/s but the car ahead is traveling at 3.75 m/s. The white lines connect the two vehicle's positions at each time step, showing how a safe distance is maintained.}
         \label{fig:vehicle_following}
  \end{figure}
  
-If the vehicle was left to follow its desired speed and road centerline, it would approach the car in front too closely. The hard constraint causes its speed to decrease, maintaining a safe distance. Fig. \ref{fig:vehicle_following} shows the position of each vehicle over time.
+The hard constraint causes the vehicle's speed to decrease, maintaining a safe distance from a slower car. Fig. \ref{fig:vehicle_following} shows the position of each vehicle over time.
  
  \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.8\linewidth]{figures/vehicle_following_velocity.pdf}
+	 	\vspace{-1em}
 	\caption{Ego vehicle velocity decreases to maintain a safe distance from another car.}		\label{fig:vehicle_following_velocity}
 \end{figure}
 
@@ -598,7 +598,8 @@ We also demonstrate an NMPC trajectory planner that implements this API. The tra
 
 
 This work was completed under Professor Sanjay Lall in the Information Systems Lab. The NMPC code was based on several open-source files provided with CasADi.
-
+Code for this paper is published at \texttt{https://github.com/elsoroka/AutonomousCarMPC/
+	tree/master/code\_for\_paper}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

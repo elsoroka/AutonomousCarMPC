@@ -1,7 +1,7 @@
 \begin{thebibliography}{10}
 
 \bibitem{beal}
-Craig~Earl Beal and J.~Christian Gerdes.
+C.~{Beal} and {Gerdes} J.
 \newblock Model predictive control for vehicle stabilization at the limits of
   handling.
 \newblock {\em IEEE Transactions on Control Systems Technology},
@@ -22,7 +22,7 @@ A.~Chebly, R.~Talj, and A.~Charara.
 \newblock 20th IFAC World Congress.
 
 \bibitem{farag}
-Wael {Farag}.
+W.~{Farag}.
 \newblock Complex-track following in real-time using model-based predictive
   control.
 \newblock {\em International Journal of Intelligent Transportation Systems
@@ -42,34 +42,31 @@ X.~{Li}, Z.~{Sun}, Q.~{Chen}, and J.~{Wang}.
   4177--4182, 2013.
 
 \bibitem{nmpc_micheli}
-Francesco Micheli, Mattia Bersani, Stefano Arrigoni, Francesco Braghin, and
-  Federico Cheli.
+F.~{Micheli}, M.~{Bersani}, S.~{Arrigoni}, F.~{Braghin}, and F.~{Cheli}.
 \newblock {NMPC} trajectory planner for urban autonomous driving.
 \newblock {\em CoRR}, abs/2105.04034, 2021.
 
 \bibitem{arrigoni2021mpc}
-Stefano Arrigoni, Francesco Braghin, and Federico Cheli.
+S.~{Arrigoni}, F.~{Braghin}, and F.~{Cheli}.
 \newblock Mpc path-planner for autonomous driving solved by genetic algorithm
   technique, 2021.
 
 \bibitem{nmpc_platform}
-Stefano Arrigoni, Simone Mentasti, Federico Cheli, Matteo Matteucci, and
-  Francesco Braghin.
+S.~{Arrigoni}, S.~{Mentasti}, F.~{Cheli}, and M.~{Matteucci}and F.~{Braghin}.
 \newblock Design of a prototypical platform for autonomous and connected
   vehicles.
 \newblock {\em CoRR}, abs/2106.09307, 2021.
 
 \bibitem{Casadi}
-Joel A~E Andersson, Joris Gillis, Greg Horn, James~B Rawlings, and Moritz
-  Diehl.
+J.~{Andersson}, J.~{Gillis}, G.~{Horn}, J.~{Rawlings}, and M.~{Diehl}.
 \newblock {CasADi} -- {A} software framework for nonlinear optimization and
   optimal control.
 \newblock {\em Mathematical Programming Computation}, 11(1):1--36, 2019.
 
 \bibitem{ipopt}
-Andreas Wächter and Lorenz~T. Biegler.
+A.~Wächter and L.~Biegler.
 \newblock On the implementation of an interior-point filter line-search
   algorithm for large-scale nonlinear programming.
-\newblock {\em Mathematical Programming}, 2006.
+\newblock {\em Mathematical Programming}, 106, 2006.
 
 \end{thebibliography}

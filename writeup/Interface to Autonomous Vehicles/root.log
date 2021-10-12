@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.9.26)  11 OCT 2021 11:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.9.26)  11 OCT 2021 23:52
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -267,18 +267,18 @@ Package: listings 2015/06/04 1.6 (Carsten Heinz)
  (./root.aux)
 \openout1 = `root.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 82.
-LaTeX Font Info:    ... okay on input line 82.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 82.
-LaTeX Font Info:    ... okay on input line 82.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 82.
-LaTeX Font Info:    ... okay on input line 82.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 82.
-LaTeX Font Info:    ... okay on input line 82.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 82.
-LaTeX Font Info:    ... okay on input line 82.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 82.
-LaTeX Font Info:    ... okay on input line 82.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 88.
+LaTeX Font Info:    ... okay on input line 88.
 
 (/usr/share/texlive/texmf-dist/tex/latex/ucs/ucsencs.def
 File: ucsencs.def 2011/01/21 Fixes to fontencodings LGR, T3
@@ -353,8 +353,24 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 \c@lstlisting=\count118
+LaTeX Font Info:    Calculating math sizes for size <11> on input line 97.
+LaTeX Font Info:    Try loading font information for U+msa on input line 97.
 
-Underfull \hbox (badness 2452) in paragraph at lines 126--127
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 97.
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 104.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+)
+Underfull \hbox (badness 2452) in paragraph at lines 138--139
 []\OT1/ptm/m/n/10 In this pa-per we di-vide hardware-dependent and -
  []
 
@@ -362,107 +378,82 @@ Underfull \hbox (badness 2452) in paragraph at lines 126--127
 
 
 ]
-LaTeX Font Info:    Try loading font information for U+msa on input line 134.
-
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Try loading font information for U+msb on input line 134.
-
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-<figures/block_diagram.pdf, id=10, 234.8775pt x 325.215pt>
+<figures/block_diagram.pdf, id=12, 234.8775pt x 325.215pt>
 File: figures/block_diagram.pdf Graphic file (type pdf)
 <use figures/block_diagram.pdf>
-Package pdftex.def Info: figures/block_diagram.pdf  used on input line 156.
+Package pdftex.def Info: figures/block_diagram.pdf  used on input line 168.
 (pdftex.def)             Requested size: 172.00192pt x 238.1543pt.
  [2 <./figures/block_diagram.pdf>]
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 169.
-
- (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
-File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-)
-<figures/corridor.pdf, id=37, 325.215pt x 216.81pt>
+<figures/corridor.pdf, id=39, 325.215pt x 216.81pt>
 File: figures/corridor.pdf Graphic file (type pdf)
 <use figures/corridor.pdf>
-Package pdftex.def Info: figures/corridor.pdf  used on input line 190.
+Package pdftex.def Info: figures/corridor.pdf  used on input line 202.
 (pdftex.def)             Requested size: 221.14479pt x 147.43214pt.
-<figures/corridor_with_turnout.pdf, id=38, 325.215pt x 180.675pt>
+<figures/corridor_with_turnout.pdf, id=40, 325.215pt x 180.675pt>
 File: figures/corridor_with_turnout.pdf Graphic file (type pdf)
 <use figures/corridor_with_turnout.pdf>
 Package pdftex.def Info: figures/corridor_with_turnout.pdf  used on input line 
-197.
+209.
 (pdftex.def)             Requested size: 221.14479pt x 122.86012pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/stop.png, id=39, 545.03625pt x 291.0875pt>
+<figures/stop.png, id=41, 545.03625pt x 291.0875pt>
 File: figures/stop.png Graphic file (type png)
 <use figures/stop.png>
-Package pdftex.def Info: figures/stop.png  used on input line 213.
+Package pdftex.def Info: figures/stop.png  used on input line 225.
 (pdftex.def)             Requested size: 221.14479pt x 118.10742pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-<figures/following.png, id=40, 669.50125pt x 271.0125pt>
+<figures/following.png, id=42, 669.50125pt x 271.0125pt>
 File: figures/following.png Graphic file (type png)
 <use figures/following.png>
-Package pdftex.def Info: figures/following.png  used on input line 220.
+Package pdftex.def Info: figures/following.png  used on input line 232.
 (pdftex.def)             Requested size: 221.14479pt x 89.51709pt.
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-<figures/obstacle_in_road.png, id=41, 539.01375pt x 298.11375pt>
+<figures/obstacle_in_road.png, id=43, 539.01375pt x 298.11375pt>
 File: figures/obstacle_in_road.png Graphic file (type png)
 <use figures/obstacle_in_road.png>
-Package pdftex.def Info: figures/obstacle_in_road.png  used on input line 227.
+Package pdftex.def Info: figures/obstacle_in_road.png  used on input line 239.
 (pdftex.def)             Requested size: 221.14479pt x 122.3093pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/kinematic_diagram.pdf, id=42, 271.0125pt x 216.81pt>
-File: figures/kinematic_diagram.pdf Graphic file (type pdf)
-<use figures/kinematic_diagram.pdf>
-Package pdftex.def Info: figures/kinematic_diagram.pdf  used on input line 249.
-
-(pdftex.def)             Requested size: 196.57523pt x 157.26427pt.
 [3 <./figures/corridor.pdf> <./figures/corridor_with_turnout.pdf
 
 pdfTeX warning: /usr/bin/pdflatex (file ./figures/corridor_with_turnout.pdf): P
 DF inclusion: multiple pdfs with page group included in a single page
-> <./figures/stop.png>]
-<figures/road_final_bounds.pdf, id=103, 361.35pt x 252.945pt>
+> <./figures/stop.png> <./figures/following.png>]
+<figures/kinematic_diagram.pdf, id=99, 271.0125pt x 216.81pt>
+File: figures/kinematic_diagram.pdf Graphic file (type pdf)
+<use figures/kinematic_diagram.pdf>
+Package pdftex.def Info: figures/kinematic_diagram.pdf  used on input line 261.
+
+(pdftex.def)             Requested size: 196.57523pt x 157.26427pt.
+<figures/road_final_bounds.pdf, id=100, 361.35pt x 252.945pt>
 File: figures/road_final_bounds.pdf Graphic file (type pdf)
 <use figures/road_final_bounds.pdf>
-Package pdftex.def Info: figures/road_final_bounds.pdf  used on input line 282.
+Package pdftex.def Info: figures/road_final_bounds.pdf  used on input line 294.
 
 (pdftex.def)             Requested size: 221.14479pt x 154.80183pt.
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 305--308
+Underfull \hbox (badness 10000) in paragraph at lines 313--316
 \OT1/ptm/m/n/10 where $\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 x[];  y[];   []$ \OT1/
 ptm/m/n/10 is re-turned by
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 305--308
+Underfull \hbox (badness 10000) in paragraph at lines 313--316
 \OT1/pcr/m/n/10 driveable[]corridor \OT1/ptm/m/n/10 and $\OML/cmm/m/it/10 v[]$ 
 \OT1/ptm/m/n/10 is re-turned by
  []
 
 
-Underfull \hbox (badness 7326) in paragraph at lines 305--308
+Underfull \hbox (badness 7326) in paragraph at lines 313--316
 \OT1/pcr/m/n/10 desired[]speed\OT1/ptm/m/n/10 . These func-tions are pro-vided 
 by
  []
 
-[4 <./figures/following.png> <./figures/obstacle_in_road.png> <./figures/kinema
-tic_diagram.pdf> <./figures/road_final_bounds.pdf
+[4 <./figures/obstacle_in_road.png> <./figures/kinematic_diagram.pdf> <./figure
+s/road_final_bounds.pdf
 
 pdfTeX warning: /usr/bin/pdflatex (file ./figures/road_final_bounds.pdf): PDF i
 nclusion: multiple pdfs with page group included in a single page
@@ -470,28 +461,25 @@ nclusion: multiple pdfs with page group included in a single page
 File: lstlang1.sty 2015/06/04 1.6 listings language file
 )
 LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <8> not available
-(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 367.
-
-
-LaTeX Warning: Reference `eq:costaccel' on page 5 undefined on input line 407.
-
-<figures/double_lane_change.pdf, id=174, 867.24pt x 216.81pt>
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 375.
+<figures/double_lane_change.pdf, id=174, 578.16pt x 144.54pt>
 File: figures/double_lane_change.pdf Graphic file (type pdf)
 <use figures/double_lane_change.pdf>
-Package pdftex.def Info: figures/double_lane_change.pdf  used on input line 418
+Package pdftex.def Info: figures/double_lane_change.pdf  used on input line 426
 .
-(pdftex.def)             Requested size: 245.71811pt x 61.42758pt.
+(pdftex.def)             Requested size: 245.71811pt x 61.42757pt.
 <figures/Position_error(lanechange).pdf, id=175, 867.24pt x 289.08pt>
 File: figures/Position_error(lanechange).pdf Graphic file (type pdf)
 <use figures/Position_error(lanechange).pdf>
 Package pdftex.def Info: figures/Position_error(lanechange).pdf  used on input 
-line 432.
+line 440.
 (pdftex.def)             Requested size: 245.71811pt x 81.90344pt.
-<figures/stop_sign.pdf, id=176, 867.24pt x 289.08pt>
+<figures/stop_sign.pdf, id=176, 578.16pt x 216.81pt>
 File: figures/stop_sign.pdf Graphic file (type pdf)
 <use figures/stop_sign.pdf>
-Package pdftex.def Info: figures/stop_sign.pdf  used on input line 453.
-(pdftex.def)             Requested size: 245.71811pt x 81.90344pt.
+Package pdftex.def Info: figures/stop_sign.pdf  used on input line 461.
+(pdftex.def)             Requested size: 245.71811pt x 92.14137pt.
+
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
@@ -501,35 +489,54 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 pdfTeX warning: /usr/bin/pdflatex (file ./figures/Position_error(lanechange).pd
 f): PDF inclusion: multiple pdfs with page group included in a single page
 >]
-<figures/stop_sign_velocity.pdf, id=240, 433.62pt x 216.81pt>
+<figures/stop_sign_velocity.pdf, id=241, 361.35pt x 180.675pt>
 File: figures/stop_sign_velocity.pdf Graphic file (type pdf)
 <use figures/stop_sign_velocity.pdf>
-Package pdftex.def Info: figures/stop_sign_velocity.pdf  used on input line 473
+Package pdftex.def Info: figures/stop_sign_velocity.pdf  used on input line 482
 .
-(pdftex.def)             Requested size: 196.57523pt x 98.2881pt.
-<figures/vehicle_following.pdf, id=241, 867.24pt x 289.08pt>
+(pdftex.def)             Requested size: 196.57523pt x 98.28809pt.
+<figures/vehicle_following.pdf, id=242, 578.16pt x 216.81pt>
 File: figures/vehicle_following.pdf Graphic file (type pdf)
 <use figures/vehicle_following.pdf>
-Package pdftex.def Info: figures/vehicle_following.pdf  used on input line 491.
+Package pdftex.def Info: figures/vehicle_following.pdf  used on input line 500.
 
-(pdftex.def)             Requested size: 245.71811pt x 81.90344pt.
-<figures/vehicle_following_velocity.pdf, id=242, 433.62pt x 216.81pt>
+(pdftex.def)             Requested size: 245.71811pt x 92.14137pt.
+<figures/vehicle_following_velocity.pdf, id=243, 361.35pt x 180.675pt>
 File: figures/vehicle_following_velocity.pdf Graphic file (type pdf)
 <use figures/vehicle_following_velocity.pdf>
 Package pdftex.def Info: figures/vehicle_following_velocity.pdf  used on input 
-line 500.
-(pdftex.def)             Requested size: 196.57523pt x 98.2881pt.
+line 510.
+(pdftex.def)             Requested size: 196.57523pt x 98.28809pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-(./root.bbl
-Underfull \hbox (badness 1460) in paragraph at lines 45--49
-[]\OT1/ptm/m/n/8 Francesco Micheli, Mat-tia Bersani, Ste-fano Ar-rigoni, France
-sco
+
+Underfull \hbox (badness 4328) in paragraph at lines 600--603
+[]\OT1/ptm/m/n/10 This work was com-pleted un-der Pro-fes-sor San-jay
  []
 
-(/usr/share/texlive/texmf-dist/tex/latex/ucs/data/uni-0.def
+
+Underfull \hbox (badness 6608) in paragraph at lines 600--603
+\OT1/ptm/m/n/10 Lall in the In-for-ma-tion Sys-tems Lab. The NMPC
+ []
+
+
+Underfull \hbox (badness 1389) in paragraph at lines 600--603
+\OT1/ptm/m/n/10 code was based on sev-eral open-source files pro-vided
+ []
+
+
+Underfull \hbox (badness 4595) in paragraph at lines 600--603
+\OT1/ptm/m/n/10 with CasADi. Code for this pa-per is pub-lished at
+ []
+
+
+Overfull \hbox (24.28189pt too wide) in paragraph at lines 600--603
+\OT1/pcr/m/n/10 https://github.com/elsoroka/AutonomousCarMPC/
+ []
+
+(./root.bbl (/usr/share/texlive/texmf-dist/tex/latex/ucs/data/uni-0.def
 File: uni-0.def 2013/05/13 UCS: Unicode data U+0000..U+00FF
 ))
 
@@ -555,41 +562,37 @@ nclusion: multiple pdfs with page group included in a single page
 
 pdfTeX warning: /usr/bin/pdflatex (file ./figures/vehicle_following_velocity.pd
 f): PDF inclusion: multiple pdfs with page group included in a single page
->] (./root.aux)
-
-LaTeX Warning: There were undefined references.
-
- ) 
+>] (./root.aux) ) 
 Here is how much of TeX's memory you used:
- 6216 strings out of 492982
- 85914 string characters out of 6134896
- 281352 words of memory out of 5000000
- 9670 multiletter control sequences out of 15000+600000
- 43640 words of font info for 94 fonts, out of 8000000 for 9000
+ 6238 strings out of 492982
+ 86254 string characters out of 6134896
+ 281571 words of memory out of 5000000
+ 9692 multiletter control sequences out of 15000+600000
+ 46446 words of font info for 106 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,14n,49p,884b,1341s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
-6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></
-usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/shar
-e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texl
-ive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texlive/texmf-dist/
-fonts/type1/urw/courier/ucrb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/u
-rw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb
-8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/s
-hare/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/te
-xmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on root.pdf (6 pages, 584551 bytes).
+ 41i,14n,49p,884b,1340s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</u
+sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/sha
+re/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/tex
+live/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8
+.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><
+/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/sh
+are/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/tex
+live/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texl
+ive/texmf-dist/fonts/type1/urw/courier/ucrb8a.pfb></usr/share/texlive/texmf-dis
+t/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1
+/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb
+i8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/s
+hare/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on root.pdf (6 pages, 584709 bytes).
 PDF statistics:
- 448 PDF objects out of 1000 (max. 8388607)
+ 449 PDF objects out of 1000 (max. 8388607)
  200 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  71 words of extra memory for PDF output out of 10000 (max. 10000000)
