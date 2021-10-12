@@ -222,21 +222,21 @@ vehicle. Finally, a constraint could keep the vehicle away from an obstruction i
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/stop.png}
+	\includegraphics[width=0.9\linewidth]{figures/stop.pdf}
 	\caption{When stopping, the vehicle must stay behind the line. Its position is constrained using a linear inequality to restrict it to the green region.} 
 	\label{fig:stopsign}
 \end{figure}
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/following.png}
+	\includegraphics[width=0.9\linewidth]{figures/following.pdf}
 	\caption{The ego vehicle is following another car. The linear inequality moves at each timestep $k=1,\dots,N$. to enforce a minimum safe distance.}
 	\label{fig:vehicle_in_front}
 \end{figure}
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/obstacle_in_road.png}
+	\includegraphics[width=0.9\linewidth]{figures/obstacle_in_road.pdf}
 	\caption{An obstacle (X) obstructs one lane, creating a circular keep-out region of radius $r$. The vehicle must stay out of the circle, creating a nonconvex constraint $(x-x_{obs})^2 + (y-y_{obs})^2 \geq r$}
 	\label{fig:obstacle}
 \end{figure}
